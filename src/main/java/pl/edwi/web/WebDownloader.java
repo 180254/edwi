@@ -5,8 +5,6 @@ import okhttp3.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.safety.Cleaner;
-import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -14,7 +12,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 public class WebDownloader {
 
@@ -28,15 +25,7 @@ public class WebDownloader {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private static final Pattern PAGE_UNWANTED_CHARS = Pattern.compile("[^\\w\r\n ]", Pattern.UNICODE_CHARACTER_CLASS);
-    private static final Pattern DOUBLE_SPACE = Pattern.compile(" {2,}");
-    private static final Pattern DOUBLE_NEWLINE = Pattern.compile("(\r?\n\\s*){2,}");
-    private static final Pattern WHITESPACES = Pattern.compile("\\s+");
-
-    // ---------------------------------------------------------------------------------------------------------------
-
     private final OkHttpClient okClient = new OkHttpClient();
-    private final Cleaner tagsCleaner = new Cleaner(Whitelist.none());
 
     // ---------------------------------------------------------------------------------------------------------------
 
@@ -60,14 +49,14 @@ public class WebDownloader {
             }
 
             byte[] bytes = response.body().bytes();
-            Charset charset = getCharset(response, bytes);
+            Charset charset = checkCharset(response, bytes);
             String page = new String(bytes, charset);
-            return transformPage(page);
+            return new WebPage(page);
         }
     }
     // ---------------------------------------------------------------------------------------------------------------
 
-    private Charset getCharset(Response response, byte[] pageBytes) throws IOException {
+    private Charset checkCharset(Response response, byte[] pageBytes) throws IOException {
         Charset charset = response.body().contentType().charset();
 
         if (charset == null) {
@@ -117,24 +106,5 @@ public class WebDownloader {
         MediaType contentType = body.contentType();
         String simplifiedType = contentType.type() + '/' + contentType.subtype();
         return ALLOWED_TYPES.contains(simplifiedType);
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-
-    private WebPage transformPage(String page) {
-        Document docDirty = Jsoup.parse(page);
-
-        Document docClean = tagsCleaner.clean(docDirty);
-        docClean.outputSettings().prettyPrint(false);
-
-        String strClean = docClean.body().html();
-        strClean = PAGE_UNWANTED_CHARS.matcher(strClean).replaceAll(" ");
-        strClean = DOUBLE_SPACE.matcher(strClean).replaceAll(" ");
-        strClean = DOUBLE_NEWLINE.matcher(strClean).replaceAll("\r\n");
-        strClean = strClean.toLowerCase();
-
-        String[] words = WHITESPACES.split(strClean);
-
-        return new WebPage(page, strClean, docDirty, words);
     }
 }

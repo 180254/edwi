@@ -4,22 +4,35 @@ import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.stream.DoubleStream;
 
-public class WebComparator {
+public class TextComparator {
 
-    private static final Pattern WHITESPACES = Pattern.compile("\\s+");
-    Set<String> stopWords = new HashSet<>(Arrays.asList(getStopWords()));
+    private final Set<String> stopWords;
 
-    public WebComparator() throws IOException {
+    public TextComparator(WebDownloader wd) throws IOException {
+        String[] stopWordsEnglish = wd
+                .download("https://raw.githubusercontent.com/bieli/stopwords/master/english.stopwords.txt")
+                .wordsArray();
+
+        String[] stopWordsPolish = wd
+                .download("https://raw.githubusercontent.com/bieli/stopwords/master/polish.stopwords.txt")
+                .wordsArray();
+
+        int length = stopWordsEnglish.length + stopWordsPolish.length;
+        Set<String> stopWords = new HashSet<>(length);
+        Collections.addAll(stopWords, stopWordsPolish);
+        Collections.addAll(stopWords, stopWordsEnglish);
+        this.stopWords = Collections.unmodifiableSet(stopWords);
     }
 
     public double compare(WebPage page1, WebPage page2) throws IOException {
-
-        SortedMap<String, Integer> wordMap1 = getWordMap(page1);
-        SortedMap<String, Integer> wordMap2 = getWordMap(page2);
+        SortedMap<String, Integer> wordMap1 = page1.wordsMap();
+        SortedMap<String, Integer> wordMap2 = page2.wordsMap();
 
         wordMap1.keySet().removeAll(stopWords);
         wordMap2.keySet().removeAll(stopWords);
@@ -35,38 +48,18 @@ public class WebComparator {
             numerator += vector1[i] * vector2[i];
         }
 
-        double denominator = Math.sqrt(DoubleStream.of(vector1).map(a -> a * a).sum()) *
-                Math.sqrt(DoubleStream.of(vector2).map(a -> a * a).sum());
+        double denominator
+                = Math.sqrt(DoubleStream.of(vector1).map(a -> a * a).sum())
+                * Math.sqrt(DoubleStream.of(vector2).map(a -> a * a).sum());
 
         return numerator / denominator;
     }
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private static String[] getStopWords() throws IOException {
-        WebPage download = new WebDownloader().download("https://raw.githubusercontent.com/bieli/stopwords/master/polish.stopwords.txt");
-        return WHITESPACES.split(download.clean());
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-
-    private SortedMap<String, Integer> getWordMap(WebPage page) {
-        String[] words = WHITESPACES.split(page.clean());
-
-        SortedMap<String, Integer> wordMap = new TreeMap<>(String::compareTo);
-
-        for (String word : words) {
-            wordMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1);
-        }
-
-        return wordMap;
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void fillTheDictionary(
-            SortedMap<String, Integer> destination,
-            SortedMap<String, Integer> source
+            SortedMap<String, Integer> source,
+            SortedMap<String, Integer> destination
     ) {
         for (String word : source.keySet()) {
             destination.putIfAbsent(word, 0);
@@ -91,7 +84,5 @@ public class WebComparator {
     private int numberOfWords(SortedMap<String, Integer> wordMap) {
         return wordMap.values().stream().mapToInt(a -> a).sum();
     }
-
-
 }
 

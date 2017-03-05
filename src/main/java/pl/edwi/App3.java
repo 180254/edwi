@@ -1,6 +1,6 @@
 package pl.edwi;
 
-import pl.edwi.cmp.WebComparator;
+import pl.edwi.cmp.TextComparator;
 import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
 
@@ -55,11 +55,11 @@ public class App3 {
             pages[i] = webDownloader.download(urls[i]);
         }
 
-        WebComparator webComparator = new WebComparator();
+        TextComparator textComparator = new TextComparator(webDownloader);
         double[][] results = new double[urls.length][urls.length];
         for (int i = 0; i < urls.length; i++) {
             for (int j = 0; j < urls.length; j++) {
-                results[i][j] = webComparator.compare(pages[i], pages[j]);
+                results[i][j] = textComparator.compare(pages[i], pages[j]);
             }
         }
 

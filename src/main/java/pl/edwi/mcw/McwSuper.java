@@ -13,13 +13,13 @@ public class McwSuper implements Mcw {
     // n*log(n) + 2n + k
     public List<Pair<String, Integer>> get(String[] words, int k, int thresh) {
 
-        Map<String, Integer> wordCntMap = new HashMap<>(words.length);
+        Map<String, Integer> wordsMap = new HashMap<>(words.length);
 
         for (String word : words) { // n
-            wordCntMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1); // 1
+            wordsMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1); // 1
         }
 
-        return wordCntMap.entrySet().stream()
+        return wordsMap.entrySet().stream()
                 .filter(o -> o.getValue() >= thresh) // n
                 .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue())) // n*log(n)
                 .limit(k)

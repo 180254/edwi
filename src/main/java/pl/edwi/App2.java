@@ -42,7 +42,7 @@ public class App2 {
         int algCnt = 0;
         for (Mcw mcw : algorithms) {
             for (int i = 0; i < 7; i++) {
-                String[] words_c = page.getWords();
+                String[] words_c = page.wordsArray();
                 long start = System.nanoTime();
 
                 result = mcw.get(words_c, k, thresh);

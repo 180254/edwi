@@ -15,8 +15,8 @@ public class WebSaver {
     // ---------------------------------------------------------------------------------------------------------------
 
     public void save(String url, WebPage page) throws IOException {
-        save(url, page.raw(), ".html");
-        save(url, page.clean(), ".txt");
+        save(url, page.rawText(), ".html");
+        save(url, page.cleanText(), ".txt");
     }
 
     // ---------------------------------------------------------------------------------------------------------------

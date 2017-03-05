@@ -9,7 +9,7 @@ public interface Mcw {
     /**
      * MostCommonWords
      *
-     * @param words  words
+     * @param words  array of words
      * @param k      k-most-common
      * @param thresh thresh-min-amount
      * @return list of pairs [Word,Cnt]

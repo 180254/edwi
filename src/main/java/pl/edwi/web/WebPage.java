@@ -1,34 +1,92 @@
 package pl.edwi.web;
 
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.safety.Cleaner;
+import org.jsoup.safety.Whitelist;
+
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 public class WebPage {
 
-    private final String raw;
-    private final String clean;
-    private final Document doc;
-    private final String[] words;
+    private static final Pattern UNWANTED_CHARS = Pattern.compile("[^\\w\r\n ]", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern DOUBLE_SPACE = Pattern.compile(" {2,}");
+    private static final Pattern DOUBLE_NEWLINE = Pattern.compile("(\r?\n\\s*){2,}");
+    private static final Pattern WHITESPACES = Pattern.compile("\\s+");
 
-    public WebPage(String raw, String clean, Document doc, String[] words) {
-        this.raw = raw;
-        this.clean = clean;
-        this.doc = doc;
-        this.words = words;
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private String _rawText;
+    private String _cleanText;
+    private Document _document;
+    private String[] _wordsArray;
+    private SortedMap<String, Integer> _wordsMap;
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    public WebPage(String rawText) {
+        this._rawText = rawText;
     }
 
-    public String raw() {
-        return raw;
+    // ---------------------------------------------------------------------------------------------------------------
+
+    public String rawText() {
+        return _rawText;
     }
 
-    public String clean() {
-        return clean;
+    public String cleanText() {
+        if (_cleanText == null) {
+            Cleaner cleaner = new Cleaner(Whitelist.none());
+            Document cleanDoc = cleaner.clean(document());
+            cleanDoc.outputSettings().prettyPrint(false);
+
+            String cleanStr = cleanDoc.body().html();
+            cleanStr = UNWANTED_CHARS.matcher(cleanStr).replaceAll(" ");
+            cleanStr = DOUBLE_SPACE.matcher(cleanStr).replaceAll(" ");
+            cleanStr = DOUBLE_NEWLINE.matcher(cleanStr).replaceAll("\r\n");
+            cleanStr = cleanStr.toLowerCase();
+
+            _cleanText = cleanStr;
+        }
+
+        return _cleanText;
     }
 
-    public Document doc() {
-        return doc.clone();
+    // ---------------------------------------------------------------------------------------------------------------
+
+    public Document document() {
+        if (_document == null) {
+            _document = Jsoup.parse(rawText());
+        }
+
+        return _document.clone();
     }
 
-    public String[] getWords() {
-        return words.clone();
+    // ---------------------------------------------------------------------------------------------------------------
+
+    public String[] wordsArray() {
+        if (_wordsArray == null) {
+            _wordsArray = WHITESPACES.split(cleanText());
+        }
+
+        return _wordsArray.clone();
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    public SortedMap<String, Integer> wordsMap() {
+        if (_wordsMap == null) {
+            SortedMap<String, Integer> wordsMap = new TreeMap<>(String::compareTo);
+
+            for (String word : wordsArray()) {
+                wordsMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1);
+            }
+
+            _wordsMap = wordsMap;
+        }
+
+        return _wordsMap;
     }
 }
