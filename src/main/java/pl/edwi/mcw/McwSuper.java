@@ -1,0 +1,29 @@
+package pl.edwi.mcw;
+
+import pl.edwi.util.Pair;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+public class McwSuper implements Mcw {
+
+    @Override
+    // n*log(n) + 2n + k
+    public List<Pair<String, Integer>> get(String[] words, int k, int thresh) {
+
+        Map<String, Integer> wordCntMap = new HashMap<>(words.length);
+
+        for (String word : words) { // n
+            wordCntMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1); // 1
+        }
+
+        return wordCntMap.entrySet().stream()
+                .filter(o -> o.getValue() >= thresh) // n
+                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue())) // n*log(n)
+                .limit(k)
+                .map(o -> new Pair<>(o.getKey(), o.getValue())) // k
+                .collect(Collectors.toList());
+    }
+}
