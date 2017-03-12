@@ -5,47 +5,40 @@ import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class App3 {
-    // zoologia, muzyka powazna, informatyka
-
     public static void main(String[] args) throws IOException {
 
-        String[] labels = {
-                "zoologia_1",
-                "zoologia_2",
-                "zoologia_3",
-                "zoologia_4",
-                "zoologia_5",
-                "muzyka_1",
-                "muzyka_2",
-                "muzyka_3",
-                "muzyka_4",
-                "muzyka_5",
-                "informatyka_1",
-                "informatyka_2",
-                "informatyka_3",
-                "informatyka_4",
-                "informatyka_5",
+        String[] names = {
+                "Kręgowce", "Ssaki", "Zwierzęta", "Pies", "Kot",
+                "Symfonia", "Opera", "Bach", "Mozart",
+                "Algorytm,", "Programista", "Kompilator", "C++", "Java"
         };
 
         String[] urls = {
-                "https://pl.wikipedia.org/wiki/Zoologia",
+                // zoologia
+                "https://pl.wikipedia.org/wiki/Kr%C4%99gowce",
+                "https://pl.wikipedia.org/wiki/Ssaki",
                 "https://pl.wikipedia.org/wiki/Zwierz%C4%99ta",
                 "https://pl.wikipedia.org/wiki/Pies_domowy",
                 "https://pl.wikipedia.org/wiki/Kot_domowy",
-                "https://pl.wikipedia.org/wiki/Ssaki",
-                "https://pl.wikipedia.org/wiki/Muzyka_powa%C5%BCna",
+
+                // muzyka powazna
                 "https://pl.wikipedia.org/wiki/Symfonia",
                 "https://pl.wikipedia.org/wiki/Opera",
-                "https://pl.wikipedia.org/wiki/Msza_(muzyka)",
-                "https://pl.wikipedia.org/wiki/Sonata",
-                "https://pl.wikipedia.org/wiki/Informatyka",
-                "https://pl.wikipedia.org/wiki/Programowanie_komputer%C3%B3w",
+                "https://pl.wikipedia.org/wiki/Johann_Sebastian_Bach",
+                "https://pl.wikipedia.org/wiki/Wolfgang_Amadeus_Mozart",
+
+                // informatyka
+                "https://pl.wikipedia.org/wiki/Algorytm",
+                "https://pl.wikipedia.org/wiki/Programista",
                 "https://pl.wikipedia.org/wiki/Kompilator",
                 "https://pl.wikipedia.org/wiki/C%2B%2B",
-                "https://pl.wikipedia.org/wiki/Wieloplatformowo%C5%9B%C4%87",
+                "https://pl.wikipedia.org/wiki/Java",
         };
 
         WebPage[] pages = new WebPage[urls.length];
@@ -56,19 +49,31 @@ public class App3 {
         }
 
         TextComparator textComparator = new TextComparator(webDownloader);
-        double[][] results = new double[urls.length][urls.length];
+        Map<String, Double> results = new HashMap<>(120);
+
         for (int i = 0; i < urls.length; i++) {
-            for (int j = 0; j < urls.length; j++) {
-                results[i][j] = textComparator.compare(pages[i], pages[j]);
+            for (int j = 0; j <= i; j++) {
+                if (i == j) continue;
+
+                results.put(
+                        String.format("[%-13s %-13s]", names[i], names[j]),
+                        textComparator.compare(pages[i], pages[j])
+                );
             }
         }
 
-        for (int i = 0; i < urls.length; i++) {
-            for (int j = 0; j < urls.length; j++) {
-                System.out.printf("%.2f ", results[i][j]);
-            }
-            System.out.println();
-        }
+        Comparator<Map.Entry<String, Double>> comparator = Comparator.comparing(Map.Entry::getValue);
+
+        System.out.println("NAJBARDZIEJ PODOBNE");
+        results.entrySet().stream()
+                .sorted(comparator.reversed())
+                .limit(10)
+                .forEach(e -> System.out.printf("%s --> %.4f\n", e.getKey(), e.getValue()));
+
+        System.out.println("\nNAJMNIEJ PODOBNE");
+        results.entrySet().stream()
+                .sorted(comparator)
+                .limit(10)
+                .forEach(e -> System.out.printf("%s --> %.4f\n", e.getKey(), e.getValue()));
     }
-
 }
