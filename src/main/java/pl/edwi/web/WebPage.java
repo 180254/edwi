@@ -1,5 +1,6 @@
 package pl.edwi.web;
 
+import com.google.common.base.MoreObjects;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Cleaner;
@@ -81,12 +82,12 @@ public class WebPage {
             SortedMap<String, Integer> wordsMap = new TreeMap<>(String::compareTo);
 
             for (String word : wordsArray()) {
-                wordsMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1);
+                wordsMap.compute(word, (s, count) -> MoreObjects.firstNonNull(count, 0) + 1);
             }
 
             _wordsMap = wordsMap;
         }
 
-        return _wordsMap;
+        return new TreeMap<>(_wordsMap);
     }
 }

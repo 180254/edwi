@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class TextComparator {
 
@@ -25,8 +26,10 @@ public class TextComparator {
 
         int length = stopWordsEnglish.length + stopWordsPolish.length;
         Set<String> stopWords = new HashSet<>(length);
+
         Collections.addAll(stopWords, stopWordsPolish);
         Collections.addAll(stopWords, stopWordsEnglish);
+
         this.stopWords = Collections.unmodifiableSet(stopWords);
     }
 
@@ -43,10 +46,10 @@ public class TextComparator {
         double[] vector1 = computeVector(wordMap1);
         double[] vector2 = computeVector(wordMap2);
 
-        double numerator = 0;
-        for (int i = 0; i < vector1.length; i++) {
-            numerator += vector1[i] * vector2[i];
-        }
+        double numerator
+                = IntStream.range(0, vector1.length)
+                .mapToDouble(i -> vector1[i] * vector2[i])
+                .sum();
 
         double denominator
                 = Math.sqrt(DoubleStream.of(vector1).map(a -> a * a).sum())
@@ -69,12 +72,12 @@ public class TextComparator {
     // ---------------------------------------------------------------------------------------------------------------
 
     private double[] computeVector(SortedMap<String, Integer> wordMap) {
-        int numberOfWords = numberOfWords(wordMap);
+        double numberOfWords = numberOfWords(wordMap);
         double[] vector = new double[wordMap.size()];
 
         int i = 0;
         for (Integer current : wordMap.values()) {
-            vector[i] = current / (double) numberOfWords;
+            vector[i] = current / numberOfWords;
             i++;
         }
 
