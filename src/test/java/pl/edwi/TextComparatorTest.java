@@ -48,7 +48,7 @@ public class TextComparatorTest {
 
     public TextComparatorTest() throws IOException {
         for (int i = 0; i < text.length; i++) {
-            wp[i] = new WebPage(text[i]);
+            wp[i] = new WebPage("localhost", text[i]);
         }
     }
 

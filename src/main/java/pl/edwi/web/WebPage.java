@@ -19,6 +19,7 @@ public class WebPage {
 
     // ---------------------------------------------------------------------------------------------------------------
 
+    private String _url;
     private String _rawText;
     private String _cleanText;
     private Document _document;
@@ -27,11 +28,17 @@ public class WebPage {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    public WebPage(String rawText) {
-        this._rawText = rawText;
+    public WebPage(String _url, String _rawText) {
+        this._url = _url;
+        this._rawText = _rawText;
     }
 
+
     // ---------------------------------------------------------------------------------------------------------------
+
+    public String url() {
+        return _url;
+    }
 
     public String rawText() {
         return _rawText;
@@ -59,7 +66,7 @@ public class WebPage {
 
     public Document document() {
         if (_document == null) {
-            _document = Jsoup.parse(rawText());
+            _document = Jsoup.parse(rawText(), url());
         }
 
         return _document.clone();

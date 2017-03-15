@@ -51,7 +51,7 @@ public class WebDownloader {
             byte[] bytes = response.body().bytes();
             Charset charset = checkCharset(response, bytes);
             String page = new String(bytes, charset);
-            return new WebPage(page);
+            return new WebPage(url, page);
         }
     }
     // ---------------------------------------------------------------------------------------------------------------
