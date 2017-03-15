@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 public class WebDownloader {
 
@@ -25,7 +26,15 @@ public class WebDownloader {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private final OkHttpClient okClient = new OkHttpClient();
+    private final OkHttpClient okClient;
+
+    public WebDownloader() {
+        this.okClient = new OkHttpClient();
+    }
+
+    public WebDownloader(ExecutorService es) {
+        this.okClient = new OkHttpClient.Builder().dispatcher(new Dispatcher(es)).build();
+    }
 
     // ---------------------------------------------------------------------------------------------------------------
 
