@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-
 public class App3 {
     public static void main(String[] args) throws IOException {
 
@@ -18,7 +17,7 @@ public class App3 {
                 "Kręgowce", "Ssaki", "Zwierzęta", "Pies", "Kot",
                 "Symfonia", "Opera", "Bach", "Mozart", "Beethoven",
                 "Algorytm", "Programista", "Kompilator", "C++", "Java",
-                "Java"
+
         };
 
         String[] urls = {
@@ -43,8 +42,6 @@ public class App3 {
                 "https://pl.wikipedia.org/wiki/C%2B%2B",
                 "https://pl.wikipedia.org/wiki/Java",
 
-                // powtórzenie
-                "https://pl.wikipedia.org/wiki/Java",
         };
 
         WebPage[] pages = new WebPage[urls.length];
@@ -66,8 +63,7 @@ public class App3 {
 
         int cmpCounter = 0;
         for (int i = 0; i < urls.length; i++) {
-            for (int j = 0; j <= i; j++) {
-                if (i == j) continue;
+            for (int j = 0; j < i; j++) {
 
                 results.put(
                         String.format("[%-13s %-13s]", names[i], names[j]),

@@ -27,98 +27,68 @@ public class App4 {
     private static final Pattern SPACE_PATTEN = Pattern.compile(" ");
     private static final Pattern END_HASH_PATTERN = Pattern.compile("#?$");
 
-    private static final String START_URL = "http://pduch.iis.p.lodz.pl/";
-    private static final int MAX_DEPTH = 2;
+    private static final String TASK_START_URL = "http://pduch.iis.p.lodz.pl/";
+    private static final int TASK_MAX_DEPTH = 2;
 
-    private final WebDownloader webDownloader = new WebDownloader();
-    private final WebSaver webSaver = new WebSaver();
+    public static void main(String[] args) {
 
-    private final InetAddress startIP = InetAddress.getByName(URL.parse(START_URL).host().toString());
-    private final Set<String> urlProcessed = new LinkedHashSet<>(5000);
-    private final Set<String> urlSameIP = new LinkedHashSet<>(5000);
-    private final Set<String> urlDiffIP = new LinkedHashSet<>(5000);
+        final WebDownloader webDownloader = new WebDownloader();
+        final WebSaver webSaver = new WebSaver();
 
-    private final Queue<Entry> queue = new LinkedList<>();
+        final InetAddress startIP;
+        try {
+            startIP = InetAddress.getByName(URL.parse(TASK_START_URL).host().toString());
+        } catch (UnknownHostException | GalimatiasParseException e) {
+            throw new RuntimeException(e);
+        }
 
-    private final URLParsingSettings urlParsingSettings = URLParsingSettings.create()
-            .withErrorHandler(StrictErrorHandler.getInstance());
+        final Set<String> urlProcessed = new LinkedHashSet<>(5000);
+        final Set<String> urlSameIP = new LinkedHashSet<>(5000);
+        final Set<String> urlDiffIP = new LinkedHashSet<>(5000);
 
-    public App4() throws
-            GalimatiasParseException,
-            UnknownHostException {
-    }
+        final Queue<Entry> queue = new LinkedList<>();
 
-    public static void main(String[] args) throws
-            GalimatiasParseException,
-            UnknownHostException,
-            InterruptedException {
+        final URLParsingSettings urlParsingSettings = URLParsingSettings.create()
+                .withErrorHandler(StrictErrorHandler.getInstance());
 
-        long startTime = System.nanoTime();
+        final long startTime = System.nanoTime();
 
-        App4 app = new App4();
-        app.queue.add(new Entry(START_URL, 0));
+        queue.add(new Entry(TASK_START_URL, 0));
 
-        while (!app.queue.isEmpty()) {
-            Entry entry = app.queue.remove();
+        while (!queue.isEmpty()) {
+            Entry entry = queue.remove();
             String url = entry.url;
             int depth = entry.depth;
 
-
-        }
-
-
-        try {
-            Files.write(Paths.get("app4-wew.txt"), app.urlSameIP, StandardCharsets.UTF_8);
-            Files.write(Paths.get("app4-zew.txt"), app.urlDiffIP, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            System.out.printf("FAIL F.WRITE:  %s%n", e);
-        }
-
-        double timeSec = (System.nanoTime() - startTime) / 1_000_000.0 / 1_000.0;
-        System.out.printf("time = %.4f seconds%n", timeSec);
-        System.out.println(app.total);
-        System.out.println(app.caches);
-
-    }
-
-    int total;
-    int caches;
-
-    public void process(String url, final int depth) {
-        System.out.println("VISITED " + depth + " " + url);
-//        aaaaa.lock();
-        try {
             WebPage page;
-            String s = webSaver.urlToFilename(url, ".html");
             try {
-                if (Files.exists(Paths.get("cache/" + s))) {
-                    total++;
-                    caches++;
-                    page = new WebPage(url, new String(Files.readAllBytes(Paths.get("cache/" + s)), StandardCharsets.UTF_8));
-                } else {
-                    total++;
+                page = webSaver.get(url);
+            } catch (IOException e1) {
+                try {
                     page = webDownloader.download(url);
-                    webSaver.save(url, page);
-                }
+                    webSaver.save(page);
 
-            } catch (IOException e) {
-                System.out.printf("FAIL.DL: %s %s%n", url, e.toString());
-                return;
+                } catch (IOException e2) {
+                    System.out.printf("FAIL.DL: %s %s%n", url, e2.toString());
+                    page = new WebPage(url, "");
+
+                    try {
+                        webSaver.save(page);
+                    } catch (IOException e) {
+                        System.out.printf("CACHE.S: %s %s%n", url, e2.toString());
+                    }
+                }
             }
 
-            Elements xxx = page.document().select("a[href]").clone();
-            // System.out.println("> " + depth + " " + new ArrayList<>(xxx).size());
+            Elements links = page.document().select("a[href]");
+            for (Element link : links) {
 
-            for (Element link : xxx) {
-                if (depth == 0) System.out.println("LINK " + link);
                 String linkHref = link.attr("abs:href");
                 linkHref = SPACE_PATTEN.matcher(linkHref).replaceAll("%20");
                 if (linkHref.isEmpty()) {
                     continue;
                 }
 
-//                Lock lock = locks.get(linkHref);
-//                lock.lock();
                 try {
                     URL linkUrl = URL.parse(urlParsingSettings, linkHref).withFragment("");
                     if (linkUrl.host() == null) {
@@ -128,40 +98,32 @@ public class App4 {
                     String linkHost = linkUrl.host().toString();
                     String linkString = END_HASH_PATTERN.matcher(linkUrl.toString()).replaceAll("");
 
-                    if (urlProcessed.contains(linkString)) {
+                    if (!urlProcessed.add(linkString)) {
                         continue;
                     }
 
-                    if (depth < MAX_DEPTH) {
-//                        System.out.println("> " + depth + " " + linkString);
-                    }
-                    urlProcessed.add(linkString);
                     InetAddress ipAddress = InetAddress.getByName(linkHost);
                     (ipAddress.equals(startIP) ? urlSameIP : urlDiffIP).add(linkString);
 
-                    if (linkString.contains("SMPD.html")) {
-                        System.out.println("X");
+                    if (depth != TASK_MAX_DEPTH) {
+                        queue.add(new Entry(linkString, (depth + 1)));
                     }
 
-                    if (depth != MAX_DEPTH) {
-                        //   System.out.println(depth);
-                        //   sync.countUp();
-                        // process(linkString, (depth + 1));
-                        process(linkString, (depth + 1));
-                    }
-
-                } catch (Exception e) {
+                } catch (UnknownHostException | GalimatiasParseException e) {
                     System.out.printf("SKIPPED: %s %s%n", linkHref, e.toString());
-                } finally {
-//                    lock.unlock();
                 }
             }
-        } catch (Exception e) {
-            System.out.println("WTFWTFTWF " + e.toString());
-        } finally {
-//            aaaaa.unlock();
-            //  sync.countDown();
         }
+
+        try {
+            Files.write(Paths.get("app4-wew.txt"), urlSameIP, StandardCharsets.UTF_8);
+            Files.write(Paths.get("app4-zew.txt"), urlDiffIP, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.out.printf("FAIL F.WRITE:  %s%n", e);
+        }
+
+        double timeSec = (System.nanoTime() - startTime) / 1_000_000.0 / 1_000.0;
+        System.out.printf("time = %.4f seconds%n", timeSec);
     }
 
     private static class Entry {

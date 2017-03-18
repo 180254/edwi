@@ -14,6 +14,14 @@ public class WebSaver {
 
     // ---------------------------------------------------------------------------------------------------------------
 
+    public WebPage get(String url) throws IOException {
+        String filename = urlToFilename(url, ".html");
+        Path path = Paths.get("cache/" + filename);
+        byte[] bytes = Files.readAllBytes(path);
+        String string = new String(bytes, StandardCharsets.UTF_8);
+        return new WebPage(url, string);
+    }
+
     public void save(WebPage page) throws IOException {
         save(page.url(), page.rawText(), ".html");
         save(page.url(), page.cleanText(), ".txt");
