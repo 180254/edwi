@@ -29,11 +29,16 @@ public class WebDownloader {
     private final OkHttpClient okClient;
 
     public WebDownloader() {
-        this.okClient = new OkHttpClient();
+        this.okClient = new OkHttpClient.Builder()
+                .build();
     }
 
-    public WebDownloader(ExecutorService es) {
-        this.okClient = new OkHttpClient.Builder().dispatcher(new Dispatcher(es)).build();
+    public WebDownloader(ExecutorService executorService) {
+        Dispatcher dispatcher = new Dispatcher(executorService);
+
+        this.okClient = new OkHttpClient.Builder()
+                .dispatcher(dispatcher)
+                .build();
     }
 
     // ---------------------------------------------------------------------------------------------------------------

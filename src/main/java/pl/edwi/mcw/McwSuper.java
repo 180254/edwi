@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+
 public class McwSuper implements Mcw {
 
     @Override
@@ -16,7 +18,7 @@ public class McwSuper implements Mcw {
         Map<String, Integer> wordsMap = new HashMap<>(words.length);
 
         for (String word : words) { // n
-            wordsMap.compute(word, (s, count) -> (count != null) ? (count + 1) : 1); // 1
+            wordsMap.compute(word, (s, count) -> firstNonNull(count, 0) + 1); // 1
         }
 
         return wordsMap.entrySet().stream()

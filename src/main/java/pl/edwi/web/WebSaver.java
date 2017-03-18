@@ -14,16 +14,16 @@ public class WebSaver {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    public void save(String url, WebPage page) throws IOException {
-        save(url, page.rawText(), ".html");
-        save(url, page.cleanText(), ".txt");
+    public void save(WebPage page) throws IOException {
+        save(page.url(), page.rawText(), ".html");
+        save(page.url(), page.cleanText(), ".txt");
     }
 
     // ---------------------------------------------------------------------------------------------------------------
 
     private void save(String url, String page, String extension) throws IOException {
         String filename = urlToFilename(url, extension);
-        Path path = Paths.get(filename);
+        Path path = Paths.get("cache/" + filename);
 
         Files.write(
                 path,
@@ -36,7 +36,7 @@ public class WebSaver {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private String urlToFilename(String url, String extension) {
+    public String urlToFilename(String url, String extension) {
         return FILENAME_INVALID_CHARS.matcher(url).replaceAll("_") + extension;
     }
 }

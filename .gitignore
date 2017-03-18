@@ -2,6 +2,7 @@
 pdf/
 *.txt
 *.html
+cache/
 
 ## Maven
 target/
