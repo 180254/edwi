@@ -6,9 +6,9 @@ import io.mola.galimatias.URL;
 import io.mola.galimatias.URLParsingSettings;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import pl.edwi.web.WebCache;
 import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
-import pl.edwi.web.WebSaver;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -33,11 +33,12 @@ public class App4 {
     public static void main(String[] args) {
 
         final WebDownloader webDownloader = new WebDownloader();
-        final WebSaver webSaver = new WebSaver();
+        final WebCache webCache = new WebCache();
 
-        final InetAddress startIP;
+        final String startIP;
         try {
-            startIP = InetAddress.getByName(URL.parse(TASK_START_URL).host().toString());
+            String startHost = URL.parse(TASK_START_URL).host().toString();
+            startIP = InetAddress.getByName(startHost).getHostAddress();
         } catch (UnknownHostException | GalimatiasParseException e) {
             throw new RuntimeException(e);
         }
@@ -45,40 +46,33 @@ public class App4 {
         final Set<String> urlProcessed = new LinkedHashSet<>(5000);
         final Set<String> urlSameIP = new LinkedHashSet<>(5000);
         final Set<String> urlDiffIP = new LinkedHashSet<>(5000);
-
-        final Queue<Entry> queue = new LinkedList<>();
+        final Queue<Task> queue = new LinkedList<>();
 
         final URLParsingSettings urlParsingSettings = URLParsingSettings.create()
                 .withErrorHandler(StrictErrorHandler.getInstance());
 
         final long startTime = System.nanoTime();
 
-        queue.add(new Entry(TASK_START_URL, 0));
+        queue.add(new Task(TASK_START_URL, 0));
 
         while (!queue.isEmpty()) {
-            Entry entry = queue.remove();
-            String url = entry.url;
-            int depth = entry.depth;
+            Task task = queue.remove();
+            String url = task.url;
+            int depth = task.depth;
 
-            WebPage page;
-            try {
-                page = webSaver.get(url);
-            } catch (IOException e1) {
+            WebPage page = webCache.getPage(url).orElseGet(() -> {
+                WebPage pageInternal;
+
                 try {
-                    page = webDownloader.download(url);
-                    webSaver.save(page);
-
-                } catch (IOException e2) {
-                    System.out.printf("FAIL.DL: %s %s%n", url, e2.toString());
-                    page = new WebPage(url, "");
-
-                    try {
-                        webSaver.save(page);
-                    } catch (IOException e) {
-                        System.out.printf("CACHE.S: %s %s%n", url, e2.toString());
-                    }
+                    pageInternal = webDownloader.download(url);
+                } catch (IOException e) {
+                    pageInternal = new WebPage(url, "");
+                    System.out.printf("FAIL.DL: %s %s%n", url, e.toString());
                 }
-            }
+
+                webCache.savePage(pageInternal);
+                return pageInternal;
+            });
 
             Elements links = page.document().select("a[href]");
             for (Element link : links) {
@@ -102,14 +96,31 @@ public class App4 {
                         continue;
                     }
 
-                    InetAddress ipAddress = InetAddress.getByName(linkHost);
+                    String ipAddress = webCache.getIp(linkHost).orElseGet(() -> {
+                        String ipInternal;
+
+                        try {
+                            ipInternal = InetAddress.getByName(linkHost).getHostAddress();
+                        } catch (UnknownHostException e) {
+                            ipInternal = "";
+                            System.out.printf("SKIPPED: %s %s%n", linkHost, e.toString());
+                        }
+
+                        webCache.saveIp(linkHost, ipInternal);
+                        return ipInternal;
+                    });
+
+                    if (ipAddress.isEmpty()) {
+                        continue;
+                    }
+
                     (ipAddress.equals(startIP) ? urlSameIP : urlDiffIP).add(linkString);
 
                     if (depth != TASK_MAX_DEPTH) {
-                        queue.add(new Entry(linkString, (depth + 1)));
+                        queue.add(new Task(linkString, (depth + 1)));
                     }
 
-                } catch (UnknownHostException | GalimatiasParseException e) {
+                } catch (GalimatiasParseException e) {
                     System.out.printf("SKIPPED: %s %s%n", linkHref, e.toString());
                 }
             }
@@ -126,11 +137,11 @@ public class App4 {
         System.out.printf("time = %.4f seconds%n", timeSec);
     }
 
-    private static class Entry {
+    private static class Task {
         private final String url;
         private final int depth;
 
-        public Entry(String url, int depth) {
+        public Task(String url, int depth) {
             this.url = url;
             this.depth = depth;
         }

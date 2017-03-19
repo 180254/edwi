@@ -4,9 +4,9 @@ import pl.edwi.mcw.Mcw;
 import pl.edwi.mcw.McwNaive;
 import pl.edwi.mcw.McwSuper;
 import pl.edwi.util.Pair;
+import pl.edwi.web.WebCache;
 import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
-import pl.edwi.web.WebSaver;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,12 +23,12 @@ public class App2 {
         // -----------------------------------------------------------------------------------------------------------
 
         WebDownloader wd = new WebDownloader();
-        WebSaver ws = new WebSaver();
+        WebCache wc = new WebCache();
 
         // -----------------------------------------------------------------------------------------------------------
 
         WebPage page = wd.download(url);
-        ws.save(page);
+        wc.savePage(page);
 
         // -----------------------------------------------------------------------------------------------------------
 

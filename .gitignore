@@ -1,8 +1,8 @@
 ## Custom
 pdf/
-*.txt
-*.html
 cache/
+*.html
+*.txt
 
 ## Maven
 target/

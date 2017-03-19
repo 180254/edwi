@@ -88,4 +88,3 @@ public class TextComparator {
         return wordMap.values().stream().mapToInt(a -> a).sum();
     }
 }
-
