@@ -66,8 +66,10 @@ public class WebDownloader {
             Charset charset = checkCharset(response, bytes);
             String page = new String(bytes, charset);
             return new WebPage(url, page);
+
         }
     }
+
     // ---------------------------------------------------------------------------------------------------------------
 
     private Charset checkCharset(Response response, byte[] pageBytes) throws IOException {
@@ -75,7 +77,17 @@ public class WebDownloader {
 
         if (charset == null) {
             String pageString = new String(pageBytes);
-            Document pageDocument = Jsoup.parse(pageString);
+
+            Document pageDocument;
+            try {
+                // May be thrown if str is not parsable text.
+                // I found web page that send text/plain even if has binary data.
+                // http://arzone.kis.p.lodz.pl/GKTM/photoediting/pliki-lab_02/Thumbs.db
+                pageDocument = Jsoup.parse(pageString);
+            } catch (IllegalArgumentException e) {
+                throw new IOException(e);
+            }
+
             Elements metaTags = pageDocument.getElementsByTag("meta");
 
             for (Element meta : metaTags) {

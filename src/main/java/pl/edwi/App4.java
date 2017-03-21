@@ -116,8 +116,10 @@ public class App4 {
 
                     (ipAddress.equals(startIP) ? urlSameIP : urlDiffIP).add(linkString);
 
-                    if (depth != TASK_MAX_DEPTH) {
-                        queue.add(new Task(linkString, (depth + 1)));
+                    if (depth != TASK_MAX_DEPTH && ipAddress.equals(startIP)) {
+                        if (linkUrl.scheme().equals("http") || linkUrl.scheme().equals("https")) {
+                            queue.add(new Task(linkString, (depth + 1)));
+                        }
                     }
 
                 } catch (GalimatiasParseException e) {
