@@ -17,11 +17,11 @@ public class TextComparator {
 
     public TextComparator(WebDownloader wd) throws IOException {
         String[] stopWordsEnglish = wd
-                .download("https://raw.githubusercontent.com/bieli/stopwords/master/english.stopwords.txt")
+                .downloadPage("https://raw.githubusercontent.com/bieli/stopwords/master/english.stopwords.txt")
                 .wordsArray();
 
         String[] stopWordsPolish = wd
-                .download("https://raw.githubusercontent.com/bieli/stopwords/master/polish.stopwords.txt")
+                .downloadPage("https://raw.githubusercontent.com/bieli/stopwords/master/polish.stopwords.txt")
                 .wordsArray();
 
         int length = stopWordsEnglish.length + stopWordsPolish.length;

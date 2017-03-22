@@ -43,7 +43,11 @@ public class WebDownloader {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    public WebPage download(String url) throws IOException {
+    public WebPage downloadPage(String url) throws IOException {
+        return downloadPage(url, null);
+    }
+
+    public WebPage downloadPage(String url, Charset charset) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("User-Agent", USER_AGENT)
@@ -63,10 +67,25 @@ public class WebDownloader {
             }
 
             byte[] bytes = response.body().bytes();
-            Charset charset = checkCharset(response, bytes);
+            if (charset == null) {
+                charset = checkCharset(response, bytes);
+            }
+
             String page = new String(bytes, charset);
             return new WebPage(url, page);
 
+        }
+    }
+
+    public byte[] downloadBytes(String url) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", USER_AGENT)
+                .build();
+
+        Call call = okClient.newCall(request);
+        try (Response response = call.execute()) {
+            return response.body().bytes();
         }
     }
 

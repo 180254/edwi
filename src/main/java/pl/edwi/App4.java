@@ -64,7 +64,7 @@ public class App4 {
                 WebPage pageInternal;
 
                 try {
-                    pageInternal = webDownloader.download(url);
+                    pageInternal = webDownloader.downloadPage(url);
                 } catch (IOException e) {
                     pageInternal = new WebPage(url, "");
                     System.out.printf("FAIL.DL: %s %s%n", url, e.toString());

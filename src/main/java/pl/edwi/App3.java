@@ -51,7 +51,7 @@ public class App3 {
                 .parallel()
                 .forEach(i -> {
                     try {
-                        pages[i] = webDownloader.download(urls[i]);
+                        pages[i] = webDownloader.downloadPage(urls[i]);
                     } catch (IOException e) {
                         pages[i] = null;
                         System.out.println("?");
