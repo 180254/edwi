@@ -42,6 +42,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("Duplicates")
 public class App5 {
     private static final Pattern NEW_LINE_PATTERN = Pattern.compile("\r?\n");
 

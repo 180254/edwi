@@ -4,6 +4,9 @@ cache/
 gutenberg/
 *.html
 *.txt
+pgdvd042010.iso
+pgdvd042010/
+lucene/
 
 ## Maven
 target/
