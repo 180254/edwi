@@ -45,8 +45,8 @@ import java.util.zip.ZipFile;
 
 public class App6 {
 
-    private static final String GUTENBERG_DIR = "C:\\Users\\Adrian\\Desktop\\pgdvd042010\\";
-    private static final String LUCENE_DIR = "C:\\Users\\Adrian\\Desktop\\lucene\\";
+    private static final String GUTENBERG_DIR = "pgdvd042010\\";
+    private static final String LUCENE_DIR = "lucene\\";
 
     private static final Pattern WHITESPACES = Pattern.compile("\\s+");
     private static final Pattern FILE_FORMAT = Pattern.compile(

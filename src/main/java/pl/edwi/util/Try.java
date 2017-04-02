@@ -2,7 +2,7 @@ package pl.edwi.util;
 
 public class Try {
 
-    public static <T> T do1(TrySupplier1<T> supplier) {
+    public static <T> T ex(TrySupplier1<T> supplier) {
         try {
             return supplier.get();
         } catch (Exception ignored) {
@@ -15,7 +15,7 @@ public class Try {
         T get() throws Exception;
     }
 
-    public static void do2(TrySupplier2 supplier) {
+    public static void ex(TrySupplier2 supplier) {
         try {
             supplier.get();
         } catch (Exception ignored) {
