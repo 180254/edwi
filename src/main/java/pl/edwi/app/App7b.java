@@ -1,4 +1,4 @@
-package pl.edwi;
+package pl.edwi.app;
 
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.apache.lucene.analysis.Analyzer;
@@ -15,9 +15,9 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import pl.edwi.bot.FindResult;
-import pl.edwi.bot.ResultTableModel;
-import pl.edwi.util.Try;
+import pl.edwi.tool.FindResult;
+import pl.edwi.tool.FindTableModel;
+import pl.edwi.tool.Try;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -45,7 +45,7 @@ public class App7b {
     private JTable resultTable;
     private JLabel statusText;
 
-    private ResultTableModel resultTableModel;
+    private FindTableModel findTableModel;
 
     // ---------------------------------------------------------------------------------------------------------------
 
@@ -104,8 +104,8 @@ public class App7b {
         app7b.approxButton.addActionListener((event) -> app7b.approxSearch(analyzer, reader));
         app7b.approxText.addActionListener((event) -> app7b.approxSearch(analyzer, reader));
 
-        app7b.resultTableModel = new ResultTableModel();
-        app7b.resultTable.setModel(app7b.resultTableModel);
+        app7b.findTableModel = new FindTableModel();
+        app7b.resultTable.setModel(app7b.findTableModel);
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ public class App7b {
                 findResults.add(fr);
             }
 
-            resultTableModel.setModelData(findResults);
+            findTableModel.setModelData(findResults);
             resizeResultTableColumns();
 
         } catch (ParseException | IOException e) {

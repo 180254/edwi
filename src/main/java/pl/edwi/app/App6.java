@@ -1,4 +1,4 @@
-package pl.edwi;
+package pl.edwi.app;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -22,7 +22,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.edwi.gut.Book;
+import pl.edwi.tool.Book;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

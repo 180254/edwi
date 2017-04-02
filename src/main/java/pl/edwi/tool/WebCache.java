@@ -1,4 +1,6 @@
-package pl.edwi.web;
+package pl.edwi.tool;
+
+import io.mola.galimatias.URL;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +13,7 @@ import java.util.regex.Pattern;
 
 public class WebCache {
 
-    private static final Pattern FILENAME_INVALID_CHARS = Pattern.compile("[^a-zA-Z0-9.-]");
+    public static final Pattern FILENAME_INVALID_CHARS = Pattern.compile("[^a-zA-Z0-9.-]");
 
     public WebCache() {
         try {
@@ -42,6 +44,27 @@ public class WebCache {
 
     public void saveIp(String host, String ip) {
         save(host, "cache/ip/", ".txt", ip);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    public String getRobots(URL url, WebDownloader wd) {
+        String robotsUrl = url.scheme() + "://" + url.host() + "/robots.txt";
+
+        Optional<WebPage> cachedPage = getPage(robotsUrl);
+        if (cachedPage.isPresent()) {
+            return cachedPage.get().rawText();
+
+        } else {
+            WebPage robotsPage;
+            try {
+                robotsPage = wd.downloadPage(robotsUrl);
+            } catch (IOException e) {
+                robotsPage = new WebPage(robotsUrl, "");
+            }
+            savePage(robotsPage);
+            return robotsPage.rawText();
+        }
     }
 
     // ---------------------------------------------------------------------------------------------------------------

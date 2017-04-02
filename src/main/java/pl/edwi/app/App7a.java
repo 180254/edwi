@@ -1,4 +1,4 @@
-package pl.edwi;
+package pl.edwi.app;
 
 import com.panforge.robotstxt.RobotsTxt;
 import io.mola.galimatias.ErrorHandler;
@@ -17,10 +17,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.edwi.util.Try;
-import pl.edwi.web.WebCache;
-import pl.edwi.web.WebDownloader;
-import pl.edwi.web.WebPage;
+import pl.edwi.tool.Try;
+import pl.edwi.tool.WebCache;
+import pl.edwi.tool.WebDownloader;
+import pl.edwi.tool.WebPage;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

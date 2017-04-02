@@ -1,4 +1,4 @@
-package pl.edwi.web;
+package pl.edwi.tool;
 
 import com.google.common.collect.ImmutableSet;
 import okhttp3.*;

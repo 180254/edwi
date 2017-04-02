@@ -1,17 +1,17 @@
-package pl.edwi.bot;
+package pl.edwi.tool;
 
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResultTableModel extends AbstractTableModel {
+public class FindTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 3L;
     private final static String[] COLUMN_NAMES = {"", "Wynik", "Strona wyszukana", "Strona podoba"};
     private final List<FindResult> results = new ArrayList<>(5);
 
-    public ResultTableModel() {
+    public FindTableModel() {
     }
 
     @Override

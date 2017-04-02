@@ -1,12 +1,6 @@
-package pl.edwi;
+package pl.edwi.app;
 
-import pl.edwi.mcw.Mcw;
-import pl.edwi.mcw.McwNaive;
-import pl.edwi.mcw.McwSuper;
-import pl.edwi.util.Pair;
-import pl.edwi.web.WebCache;
-import pl.edwi.web.WebDownloader;
-import pl.edwi.web.WebPage;
+import pl.edwi.tool.*;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package pl.edwi.bot;
+package pl.edwi.tool;
 
 import java.io.Serializable;
 

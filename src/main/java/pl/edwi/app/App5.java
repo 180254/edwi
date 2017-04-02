@@ -1,4 +1,4 @@
-package pl.edwi;
+package pl.edwi.app;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -26,8 +26,8 @@ import org.marc4j.marc.Record;
 import org.marc4j.marc.Subfield;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.edwi.gut.Book;
-import pl.edwi.web.WebDownloader;
+import pl.edwi.tool.Book;
+import pl.edwi.tool.WebDownloader;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

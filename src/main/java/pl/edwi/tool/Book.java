@@ -1,4 +1,4 @@
-package pl.edwi.gut;
+package pl.edwi.tool;
 
 import java.text.MessageFormat;
 

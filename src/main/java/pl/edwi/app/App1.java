@@ -1,4 +1,4 @@
-package pl.edwi;
+package pl.edwi.app;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;

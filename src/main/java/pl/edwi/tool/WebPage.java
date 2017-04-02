@@ -1,4 +1,4 @@
-package pl.edwi.web;
+package pl.edwi.tool;
 
 import com.google.common.base.MoreObjects;
 import org.jsoup.Jsoup;
@@ -12,10 +12,10 @@ import java.util.regex.Pattern;
 
 public class WebPage {
 
-    private static final Pattern UNWANTED_CHARS = Pattern.compile("[^\\w\r\n ]", Pattern.UNICODE_CHARACTER_CLASS);
-    private static final Pattern DOUBLE_SPACE = Pattern.compile(" {2,}");
-    private static final Pattern DOUBLE_NEWLINE = Pattern.compile("(\r?\n\\s*){2,}");
-    private static final Pattern WHITESPACES = Pattern.compile("\\s+");
+    public static final Pattern UNWANTED_CHARS = Pattern.compile("[^\\w\r\n ]", Pattern.UNICODE_CHARACTER_CLASS);
+    public static final Pattern DOUBLE_SPACE = Pattern.compile(" {2,}");
+    public static final Pattern DOUBLE_NEWLINE = Pattern.compile("(\r?\n\\s*){2,}");
+    public static final Pattern WHITESPACES = Pattern.compile("\\s+");
 
     // ---------------------------------------------------------------------------------------------------------------
 

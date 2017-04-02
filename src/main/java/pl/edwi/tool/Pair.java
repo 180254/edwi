@@ -1,4 +1,4 @@
-package pl.edwi.util;
+package pl.edwi.tool;
 
 public class Pair<K, V> {
 
