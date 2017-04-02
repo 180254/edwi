@@ -1,7 +1,5 @@
 package pl.edwi.tool;
 
-import io.mola.galimatias.URL;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,8 +46,9 @@ public class WebCache {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    public String getRobots(URL url, WebDownloader wd) {
-        String robotsUrl = url.scheme() + "://" + url.host() + "/robots.txt";
+    public String getRobots(String url, WebDownloader wd) {
+        int slash = url.indexOf('/', 8);
+        String robotsUrl = (slash == -1 ? url : url.substring(0, slash)) + "/robots.txt";
 
         Optional<WebPage> cachedPage = getPage(robotsUrl);
         if (cachedPage.isPresent()) {

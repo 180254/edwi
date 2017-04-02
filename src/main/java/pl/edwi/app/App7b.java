@@ -30,6 +30,7 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -165,9 +166,13 @@ public class App7b {
                 fr.resultScore = hit.score;
 
                 Query queryMlt = mlt.like(hit.doc);
-                TopDocs similarDocs = searcher.search(queryMlt, 2);
+                TopDocs similarDocs = searcher.search(queryMlt, 3);
                 if (similarDocs.totalHits > 1) {
-                    ScoreDoc similarHit = similarDocs.scoreDocs[1];
+                    ScoreDoc similarHit =
+                            Arrays.stream(similarDocs.scoreDocs)
+                                    .filter(h -> h.doc != hit.doc)
+                                    .findFirst()
+                                    .orElse(null);
                     Document similarDoc = searcher.doc(similarHit.doc);
                     fr.similarUrl = similarDoc.get("url");
                 }

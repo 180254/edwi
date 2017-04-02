@@ -26,13 +26,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class App7a {
 
@@ -72,18 +72,21 @@ public class App7a {
             App7a app7a = new App7a();
             app7a.logger.info("start.");
 
-            Arrays.asList(
+            Stream.of(
+                    "https://www.p.lodz.pl/CHANGELOG.txt",
                     "http://pduch.kis.p.lodz.pl",
                     "https://pl.wikipedia.org/wiki/Komputer",
                     "http://www.ekologia.pl/wiedza/zwierzeta/ssaki",
                     "http://agencjafilharmonia.pl/jan-sebastian-bach/"
-            ).forEach((p) -> {
-                app7a.scheduledSet.add(p);
-                app7a.executor.execute(() -> app7a.process(indexWriter, p));
-            });
+            )
+                    .map((p) -> {
+                        app7a.scheduledSet.add(p);
+                        return p;
+                    })
+                    .forEach((p) -> app7a.executor.execute(() -> app7a.process(indexWriter, p)));
 
             app7a.theEnd.await();
-            app7a.executor.shutdownNow();
+            app7a.executor.shutdown();
             app7a.executor.awaitTermination(5, TimeUnit.MINUTES);
 
             app7a.logger.info("done.");
@@ -91,6 +94,8 @@ public class App7a {
             app7a.logger.info("indexedSet={}", app7a.indexedSet.size());
             app7a.logger.info("scheduledSet.size={}", app7a.scheduledSet.size());
             app7a.logger.info("scheduler.completed={}", ((ThreadPoolExecutor) app7a.executor).getCompletedTaskCount());
+
+            indexWriter.commit();
         }
     }
 
@@ -99,6 +104,11 @@ public class App7a {
     public void process(IndexWriter indexWriter, String url) {
         try {
             if (indexedCnt.get() >= DL_LIMIT) {
+                return;
+            }
+
+            if (!isRobotWelcome(url)) {
+//                logger.debug("robots.no.access: {}", url);
                 return;
             }
 
@@ -140,9 +150,8 @@ public class App7a {
                     .filter(Objects::nonNull)
                     .filter(p -> p.host() != null)
                     .filter(p -> p.scheme().equals("http") || p.scheme().equals("https"))
-                    .filter(this::isRobotWelcome)
                     .map(p -> END_CHARS_PATTERN.matcher(p.toString()).replaceAll(""))
-                    .filter(p -> indexedCnt.get() != DL_LIMIT)
+                    .filter(p -> indexedCnt.get() < DL_LIMIT)
                     .filter(e -> scheduledSet.size() < DL_LIMIT * 3 && scheduledSet.add(e))
                     .forEach(p -> {
                         try {
@@ -154,25 +163,21 @@ public class App7a {
                     });
 
         } catch (Exception e) {
-            logger.trace("fail: {}, {}", url, e.toString());
+//            logger.debug("fail: {}, {}", url, e.toString());
         }
     }
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private boolean isRobotWelcome(URL url) {
+    private boolean isRobotWelcome(String url) {
         String robotsFile = webCache.getRobots(url, webDownloader);
 
         try (InputStream robotsIs = new ByteArrayInputStream(robotsFile.getBytes())) {
             RobotsTxt robotsTxt = RobotsTxt.read(robotsIs);
-            boolean hasAccess = robotsTxt.query(WebDownloader.USER_AGENT, url.toString());
-            if (!hasAccess) {
-                logger.trace("robots.no.access: {}", url.toHumanString());
-            }
+            return robotsTxt.query(WebDownloader.USER_AGENT, url);
 
-            return hasAccess;
         } catch (IOException e) {
-            logger.error("robots.test.fail {} {}", url.toHumanString(), e.toString());
+            logger.error("robots.test.fail {} {}", url, e.toString());
             return false;
         }
     }
