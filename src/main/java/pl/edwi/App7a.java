@@ -1,5 +1,6 @@
 package pl.edwi;
 
+import com.panforge.robotstxt.RobotsTxt;
 import io.mola.galimatias.ErrorHandler;
 import io.mola.galimatias.StrictErrorHandler;
 import io.mola.galimatias.URL;
@@ -21,7 +22,9 @@ import pl.edwi.web.WebCache;
 import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
@@ -59,6 +62,8 @@ public class App7a {
 
     }
 
+    // ---------------------------------------------------------------------------------------------------------------
+
     public static void main(String[] args) throws IOException, InterruptedException {
         try (Analyzer indexAnalyzer = new StandardAnalyzer();
              Directory indexDirectory = FSDirectory.open(Paths.get(LUCENE_DIR));
@@ -88,6 +93,8 @@ public class App7a {
             app7a.logger.info("scheduler.completed={}", ((ThreadPoolExecutor) app7a.executor).getCompletedTaskCount());
         }
     }
+
+    // ---------------------------------------------------------------------------------------------------------------
 
     public void process(IndexWriter indexWriter, String url) {
         try {
@@ -133,6 +140,7 @@ public class App7a {
                     .filter(Objects::nonNull)
                     .filter(p -> p.host() != null)
                     .filter(p -> p.scheme().equals("http") || p.scheme().equals("https"))
+                    .filter(this::isRobotWelcome)
                     .map(p -> END_CHARS_PATTERN.matcher(p.toString()).replaceAll(""))
                     .filter(p -> indexedCnt.get() != DL_LIMIT)
                     .filter(e -> scheduledSet.size() < DL_LIMIT * 3 && scheduledSet.add(e))
@@ -147,6 +155,25 @@ public class App7a {
 
         } catch (Exception e) {
             logger.trace("fail: {}, {}", url, e.toString());
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private boolean isRobotWelcome(URL url) {
+        String robotsFile = webCache.getRobots(url, webDownloader);
+
+        try (InputStream robotsIs = new ByteArrayInputStream(robotsFile.getBytes())) {
+            RobotsTxt robotsTxt = RobotsTxt.read(robotsIs);
+            boolean hasAccess = robotsTxt.query(WebDownloader.USER_AGENT, url.toString());
+            if (!hasAccess) {
+                logger.trace("robots.no.access: {}", url.toHumanString());
+            }
+
+            return hasAccess;
+        } catch (IOException e) {
+            logger.error("robots.test.fail {} {}", url.toHumanString(), e.toString());
+            return false;
         }
     }
 }

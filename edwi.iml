@@ -39,6 +39,8 @@
     <orderEntry type="library" name="Maven: org.marc4j:marc4j:2.8.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-compress:1.13" level="project" />
     <orderEntry type="library" name="Maven: net.lingala.zip4j:zip4j:1.3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.panforge:robots:1.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.12" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
   </component>

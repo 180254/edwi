@@ -16,11 +16,11 @@ import java.util.concurrent.ExecutorService;
 
 public class WebDownloader {
 
-    private static final String USER_AGENT = "some-robot-agent/1.0";
+    public static final String USER_AGENT = "some-robot-agent/1.0";
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private static final Set<String> ALLOWED_TYPES = ImmutableSet.of(
+    public static final Set<String> ALLOWED_TYPES = ImmutableSet.of(
             "text/html", "application/xhtml+xml", "text/plain"
     );
 
