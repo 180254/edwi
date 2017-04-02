@@ -42,7 +42,6 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("Duplicates")
 public class App5 {
     private static final Pattern NEW_LINE_PATTERN = Pattern.compile("\r?\n");
 
@@ -176,7 +175,7 @@ public class App5 {
     }
 
     private void searchTask(String find) throws ParseException, IOException {
-        Query query = new QueryParser("title", analyzer).parse(find);
+        Query query = new QueryParser("content", analyzer).parse(find);
 
         try (IndexReader reader = DirectoryReader.open(index)) {
             IndexSearcher searcher = new IndexSearcher(reader);

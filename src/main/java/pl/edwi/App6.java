@@ -1,7 +1,7 @@
 package pl.edwi;
 
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -17,46 +17,45 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.edwi.gut.Book;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
-@SuppressWarnings("Duplicates")
 public class App6 {
 
     private static final String GUTENBERG_DIR = "C:\\Users\\Adrian\\Desktop\\pgdvd042010\\";
-    private static final String UNZIP_DIR = "C:\\Users\\Adrian\\Desktop\\pgdvd042010\\uz\\";
     private static final String LUCENE_DIR = "C:\\Users\\Adrian\\Desktop\\lucene\\";
 
-    private static final Pattern FILE_TXT_FORMAT = Pattern.compile(
-            "([0-9]+)(?:[_\\-][0-9])?\\.txt", Pattern.CASE_INSENSITIVE // 00000.txt / 00000-9.txt
-    );
-    private static final Pattern CARRIAGE_RETURN = Pattern.compile("\r", Pattern.LITERAL);
     private static final Pattern WHITESPACES = Pattern.compile("\\s+");
+    private static final Pattern FILE_FORMAT = Pattern.compile(
+            "([0-9]+)(?:[_\\-][0-9])?\\.(txt|zip)", Pattern.CASE_INSENSITIVE // 00000.txt / 00000-9.txt
+    );
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final StandardAnalyzer analyzer = new StandardAnalyzer();
-    private final Directory index = FSDirectory.open(Paths.get(LUCENE_DIR));
-
-    private final Set<String> parsedBooks = ConcurrentHashMap.newKeySet();
-    private final AtomicInteger counterZips = new AtomicInteger();
-    private final AtomicInteger counterBooks = new AtomicInteger();
-    private final AtomicInteger counterUnknown = new AtomicInteger();
+    private final Set<String> books = ConcurrentHashMap.newKeySet();
+    private final AtomicInteger counter = new AtomicInteger();
 
     public App6() throws IOException {
     }
@@ -64,29 +63,30 @@ public class App6 {
     // ---------------------------------------------------------------------------------------------------------------
 
     public static void main(String[] args) throws IOException {
-        App6 app6 = new App6();
-        app6.logger.info("start");
+        try (Analyzer analyzer = new StandardAnalyzer();
+             Directory index = FSDirectory.open(Paths.get(LUCENE_DIR))) {
 
-//        app6.unzipAllZips();
-        app6.logger.debug("unzip.done");
-        app6.logger.info("unzip.counter: {}", app6.counterZips.get());
+            App6 app6 = new App6();
+            app6.logger.info("start");
 
-//        app6.parseAllBooks();
-        app6.logger.debug("parse.done");
-        app6.logger.info("parse.total.counter: {}", app6.counterBooks.get());
-        app6.logger.info("parse.unknown.counter: {}", app6.counterUnknown.get());
+//            app6.processAll(analyzer, index);
+            app6.logger.debug("process.done");
+            app6.logger.info("process.counter: {}", app6.counter.get());
 
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            System.out.print("> ");
-            String searching = scanner.nextLine();
-            if (searching.equals("q")) {
-                break;
-            } else {
-                try {
-                    app6.searchTask(searching.trim());
-                } catch (ParseException e) {
-                    System.out.println("Query cannot be parsed: {}" + e.toString());
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (true) {
+                    System.out.print("> ");
+                    System.out.flush();
+                    String searching = scanner.nextLine();
+                    if (searching.equals("q")) {
+                        break;
+                    } else {
+                        try {
+                            app6.doSearchTask(analyzer, index, searching.trim());
+                        } catch (ParseException | InvalidTokenOffsetsException e) {
+                            System.out.println("Query cannot be parsed: {}" + e.toString());
+                        }
+                    }
                 }
             }
         }
@@ -94,37 +94,8 @@ public class App6 {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private void unzipAllZips() throws IOException {
-
-        Files.find(
-                Paths.get(GUTENBERG_DIR),
-                Integer.MAX_VALUE,
-                (path, attr) -> attr.isRegularFile()
-        )
-                .parallel()
-                .filter(path -> path.toString().toLowerCase().endsWith(".zip"))
-                .filter(path -> !path.toString().contains("ETEXT"))
-                .forEach(path -> {
-                    try {
-                        ZipFile zipFile = new ZipFile(path.toString());
-                        zipFile.extractAll(UNZIP_DIR);
-                    } catch (ZipException e) {
-                        logger.warn("unzip.error {} {}", path, e.toString());
-                    }
-
-                    int cnt = counterZips.incrementAndGet();
-                    if (cnt % 100 == 0) {
-                        logger.debug("unzip.counter: {}", cnt);
-                    }
-                });
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-
-    private void parseAllBooks() throws IOException {
-
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        try (IndexWriter indexWriter = new IndexWriter(index, config)) {
+    private void processAll(Analyzer analyzer, Directory index) throws IOException {
+        try (IndexWriter indexWriter = new IndexWriter(index, new IndexWriterConfig(analyzer))) {
 
             Files.find(
                     Paths.get(GUTENBERG_DIR),
@@ -132,92 +103,175 @@ public class App6 {
                     (path, attr) -> attr.isRegularFile()
             )
                     .parallel()
-                    .filter(path -> {
-                        String fileName = path.getFileName().toString();
-                        Matcher matcher = FILE_TXT_FORMAT.matcher(fileName);
-                        return matcher.matches() && parsedBooks.add(matcher.group(1));
-                    })
+                    .filter(path -> !path.toString().contains("ETEXT"))
                     .forEach(path -> {
-                        try {
-                            String fileName = path.getFileName().toString();
-                            Charset charset = StandardCharsets.UTF_8;
+                        String pathLower = path.toString().toLowerCase();
 
-                            byte[] bytes = Files.readAllBytes(path);
-                            String string = new String(bytes, charset);
-                            Book book = parseBook(fileName, string);
-
-                            Document doc = new Document();
-                            doc.add(new StringField("id", book.getId(), Field.Store.YES));
-                            doc.add(new TextField("title", book.getTitle(), Field.Store.YES));
-                            doc.add(new TextField("content", book.getContent(), Field.Store.YES));
-                            indexWriter.addDocument(doc);
-
-                        } catch (IOException e) {
-                            logger.error("parse.error {}, {}", path, e.toString());
-                        }
-
-                        int cnt = counterBooks.incrementAndGet();
-                        if (cnt % 100 == 0) {
-                            logger.debug("parse.counter: {}", cnt);
+                        if (pathLower.endsWith(".zip")) {
+                            processZip(indexWriter, path);
+                        } else if (pathLower.endsWith(".txt")) {
+                            processTxt(indexWriter, path);
                         }
                     });
         }
     }
 
+
     // ---------------------------------------------------------------------------------------------------------------
 
-    private Book parseBook(String filename, String raw) {
-        String[] text = CARRIAGE_RETURN.matcher(raw).replaceAll("").split("\n");
+    private void processZip(IndexWriter indexWriter, Path path) {
+        try (ZipFile zipFile = new ZipFile(path.toFile())) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-        int titleIndex = 0;
-        boolean titleProcess = false;
-        StringBuilder titleBuilder = new StringBuilder(50);
-        for (int i = 0; i < text.length; i++) {
-            if (text[i].startsWith("Title:")) {
-                titleBuilder.append(text[i].substring(6));
-                titleIndex = i;
-                titleProcess = true;
+            while (entries.hasMoreElements()) {
+                ZipEntry zipEntry = entries.nextElement();
+                if (zipEntry.isDirectory()) {
+                    continue;
+                }
 
-            } else if (titleProcess) {
-                if (!text[i].isEmpty()) {
-                    titleBuilder.append(text[i]);
-                } else {
-                    break;
+                if (!isNewBook(new File(zipEntry.getName()).getName())) {
+                    continue;
+                }
+
+                try (InputStream is = zipFile.getInputStream(zipEntry)) {
+                    Book book = parseBook(path.getFileName().toString(), is);
+                    Document doc = bookDocument(book);
+                    indexWriter.addDocument(doc);
+                    counterPlusPlus();
                 }
             }
+
+        } catch (IOException e) {
+            logger.error("process.error: {} {}", path, e.toString());
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private void processTxt(IndexWriter indexWriter, Path path) {
+        if (!isNewBook(path.getFileName().toString())) {
+            return;
         }
 
-        int contentIndex = 0;
-        for (int i = titleIndex; i < text.length; i++) {
-            if (text[i].startsWith("*** START OF THIS PROJECT GUTENBERG")) {
-                contentIndex = i + 1;
-                break;
+        try (InputStream is = Files.newInputStream(path)) {
+            Book book = parseBook(path.getFileName().toString(), is);
+            Document doc = bookDocument(book);
+            indexWriter.addDocument(doc);
+            counterPlusPlus();
+
+        } catch (IOException e) {
+            logger.error("process.error: {} {}", path, e.toString());
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private void counterPlusPlus() {
+        int cnt = counter.incrementAndGet();
+        if (cnt % 100 == 0) {
+            logger.debug("process.counter: {}", cnt);
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private boolean isNewBook(String fileName) {
+        Matcher matcher = FILE_FORMAT.matcher(fileName);
+        return matcher.matches() && books.add(matcher.group(1));
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private Document bookDocument(Book book) throws IOException {
+        Document doc = new Document();
+        doc.add(new StringField("id", book.getId(), Field.Store.YES));
+        doc.add(new TextField("title", book.getTitle(), Field.Store.YES));
+        doc.add(new TextField("content", book.getContent(), Field.Store.YES));
+        return doc;
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private Book parseBook(String filename, InputStream inputStream) throws IOException {
+        String raw = readInputStream(filename, inputStream);
+        String title = "";
+        String content = "";
+
+        int titleBegin = raw.indexOf("Title:") + 6;
+        if (titleBegin != -1) {
+            int titleEnd = raw.indexOf("\r\n\r\n", titleBegin);
+            if (titleEnd == -1) {
+                titleEnd = raw.indexOf("\n\n", titleBegin);
             }
-        }
+            title = raw.substring(titleBegin, titleEnd);
+            title = WHITESPACES.matcher(title).replaceAll(" ").trim();
 
-        String title = WHITESPACES.matcher(titleBuilder).replaceAll(" ").trim();
-        String content = String.join("\n", Arrays.asList(text).subList(contentIndex, text.length)).trim();
 
-        if (title.isEmpty()) {
-            counterUnknown.incrementAndGet();
+            int startBegin = raw.indexOf("***", titleEnd);
+            if (startBegin != -1) {
+                int startEnd = raw.indexOf("\r\n", startBegin);
+                if (startEnd == -1) {
+                    startEnd = raw.indexOf('\n', titleBegin);
+                }
+
+                content = raw.substring(startEnd);
+                content = WHITESPACES.matcher(content).replaceAll(" ").trim();
+            }
         }
 
         return new Book(filename, title, content);
     }
 
+    // ---------------------------------------------------------------------------------------------------------------
 
-    private void searchTask(String find) throws ParseException, IOException {
-        Query query = new QueryParser("title", analyzer).parse(find);
+    private String readInputStream(String filename, InputStream inputStream) throws IOException {
+        Charset charset;
+        if (filename.contains("-0") || filename.contains("_0")) {
+            charset = StandardCharsets.UTF_8;
+        } else if (filename.contains("-8") || filename.contains("_8")) {
+            charset = StandardCharsets.ISO_8859_1;
+        } else {
+            charset = StandardCharsets.US_ASCII;
+        }
+
+        try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024 * 8];
+
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+
+            return result.toString(charset.name());
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+
+    private void doSearchTask(Analyzer analyzer, Directory index, String find)
+            throws ParseException, IOException, InvalidTokenOffsetsException {
 
         try (IndexReader reader = DirectoryReader.open(index)) {
+            Query query = new QueryParser("content", analyzer).parse(find);
+
             IndexSearcher searcher = new IndexSearcher(reader);
             TopDocs docs = searcher.search(query, 10);
             ScoreDoc[] hits = docs.scoreDocs;
 
+            Formatter formatter = new SimpleHTMLFormatter();
+            Highlighter highlighter = new Highlighter(formatter, new QueryScorer(query));
+
             System.out.println("Found " + docs.totalHits + " hits.");
             for (int i = 0; i < hits.length; ++i) {
-                Document d = searcher.doc(hits[i].doc);
-                System.out.printf("%2d. [%2.4f] %-13s %s%n", i + 1, hits[i].score, d.get("id"), d.get("title"));
+                int docId = hits[i].doc;
+                Document doc = searcher.doc(docId);
+
+                String content = doc.get("content");
+                TokenStream tokenStream = TokenSources.getTokenStream("content", reader.getTermVectors(docId), content, analyzer, -1);
+                TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, content, false, 1);
+
+                System.out.printf("%2d. [%2.4f] %-13s %s%n", i + 1, hits[i].score, doc.get("id"), doc.get("title"));
+                System.out.printf("%11s %s%n", "", frag[0].toString());
             }
         }
     }
