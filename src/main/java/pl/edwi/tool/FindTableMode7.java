@@ -5,18 +5,18 @@ import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FindTableModel extends AbstractTableModel {
+public class FindTableMode7 extends AbstractTableModel {
 
     private static final long serialVersionUID = 3L;
     private final static String[] COLUMN_NAMES = {"", "Wynik", "Strona wyszukana", "Strona podoba"};
-    private final List<FindResult> results = new ArrayList<>(5);
+    private final List<FindResult7> results = new ArrayList<>(5);
 
-    public FindTableModel() {
+    public FindTableMode7() {
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        FindResult fr = results.get(rowIndex);
+        FindResult7 fr = results.get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return rowIndex + 1;
@@ -51,7 +51,7 @@ public class FindTableModel extends AbstractTableModel {
         return true;
     }
 
-    public void setModelData(List<FindResult> results) {
+    public void setModelData(List<FindResult7> results) {
         this.results.clear();
         this.results.addAll(results);
         fireTableDataChanged();

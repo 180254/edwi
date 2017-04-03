@@ -15,8 +15,8 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import pl.edwi.tool.FindResult;
-import pl.edwi.tool.FindTableModel;
+import pl.edwi.tool.FindResult7;
+import pl.edwi.tool.FindTableMode7;
 import pl.edwi.tool.Try;
 
 import javax.swing.*;
@@ -46,7 +46,7 @@ public class App7b {
     private JTable resultTable;
     private JLabel statusText;
 
-    private FindTableModel findTableModel;
+    private FindTableMode7 findTableModel;
 
     // ---------------------------------------------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ public class App7b {
         app7b.approxButton.addActionListener((event) -> app7b.approxSearch(analyzer, reader));
         app7b.approxText.addActionListener((event) -> app7b.approxSearch(analyzer, reader));
 
-        app7b.findTableModel = new FindTableModel();
+        app7b.findTableModel = new FindTableMode7();
         app7b.resultTable.setModel(app7b.findTableModel);
     }
 
@@ -157,9 +157,9 @@ public class App7b {
 
             statusText.setText("Znaleziono " + topDocs.totalHits + " wyników.");
 
-            List<FindResult> findResults = new ArrayList<>(5);
+            List<FindResult7> findResults = new ArrayList<>(5);
             for (ScoreDoc hit : topHits) {
-                FindResult fr = new FindResult();
+                FindResult7 fr = new FindResult7();
                 Document doc = searcher.doc(hit.doc);
 
                 fr.resultUrl = doc.get("url");

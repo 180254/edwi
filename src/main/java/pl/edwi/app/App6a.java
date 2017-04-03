@@ -1,23 +1,13 @@
 package pl.edwi.app;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
@@ -34,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,10 +33,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 @SuppressWarnings("Duplicates")
-public class App6 {
+public class App6a {
 
-    private static final String GUTENBERG_DIR = "pgdvd042010\\";
-    private static final String LUCENE_DIR = "lucene\\";
+    public static final String GUTENBERG_DIR = "pgdvd042010\\";
+    public static final String LUCENE_DIR = "lucene\\";
 
     private static final Pattern WHITESPACES = Pattern.compile("\\s+");
     private static final Pattern FILE_FORMAT = Pattern.compile(
@@ -58,7 +47,7 @@ public class App6 {
     private final Set<String> books = ConcurrentHashMap.newKeySet();
     private final AtomicInteger counter = new AtomicInteger();
 
-    public App6() throws IOException {
+    public App6a() throws IOException {
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -67,29 +56,12 @@ public class App6 {
         try (Analyzer analyzer = new StandardAnalyzer();
              Directory index = FSDirectory.open(Paths.get(LUCENE_DIR))) {
 
-            App6 app6 = new App6();
-            app6.logger.info("start");
+            App6a app6a = new App6a();
+            app6a.logger.info("start");
 
-            app6.processAll(analyzer, index);
-            app6.logger.debug("process.done");
-            app6.logger.info("process.counter: {}", app6.counter.get());
-
-            try (Scanner scanner = new Scanner(System.in)) {
-                while (true) {
-                    System.out.print("> ");
-                    System.out.flush();
-                    String searching = scanner.nextLine();
-                    if (searching.equals("q")) {
-                        break;
-                    } else {
-                        try {
-                            app6.doSearchTask(analyzer, index, searching.trim());
-                        } catch (ParseException | InvalidTokenOffsetsException e) {
-                            System.out.println("Query cannot be parsed: {}" + e.toString());
-                        }
-                    }
-                }
-            }
+            app6a.processAll(analyzer, index);
+            app6a.logger.debug("process.done");
+            app6a.logger.info("process.counter: {}", app6a.counter.get());
         }
     }
 
@@ -247,36 +219,6 @@ public class App6 {
             }
 
             return result.toString(charset.name());
-        }
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-
-    private void doSearchTask(Analyzer analyzer, Directory index, String find)
-            throws ParseException, IOException, InvalidTokenOffsetsException {
-
-        try (IndexReader reader = DirectoryReader.open(index)) {
-            Query query = new QueryParser("content", analyzer).parse(find);
-
-            IndexSearcher searcher = new IndexSearcher(reader);
-            TopDocs docs = searcher.search(query, 10);
-            ScoreDoc[] hits = docs.scoreDocs;
-
-            Formatter formatter = new SimpleHTMLFormatter();
-            Highlighter highlighter = new Highlighter(formatter, new QueryScorer(query));
-
-            System.out.println("Found " + docs.totalHits + " hits.");
-            for (int i = 0; i < hits.length; ++i) {
-                int docId = hits[i].doc;
-                Document doc = searcher.doc(docId);
-
-                String content = doc.get("content");
-                TokenStream tokenStream = TokenSources.getTokenStream("content", reader.getTermVectors(docId), content, analyzer, -1);
-                TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, content, false, 1);
-
-                System.out.printf("%2d. [%2.4f] %-13s %s%n", i + 1, hits[i].score, doc.get("id"), doc.get("title"));
-                System.out.printf("%11s %s%n", "", frag[0].toString());
-            }
         }
     }
 }

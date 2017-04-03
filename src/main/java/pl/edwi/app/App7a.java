@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+@SuppressWarnings("Duplicates")
 public class App7a {
 
     public static final int DL_LIMIT = 1_000;
