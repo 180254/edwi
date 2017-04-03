@@ -1,13 +1,15 @@
 ## Custom
 pdf/
-cache/
+cache/ip/*
+cache/page/*
 gutenberg/
 *.html
 *.txt
 pgdvd042010.iso
 pgdvd042010/
-lucene/
-lucene7/
+lucene/*
+lucene7/*
+!.keep
 
 ## Maven
 target/
