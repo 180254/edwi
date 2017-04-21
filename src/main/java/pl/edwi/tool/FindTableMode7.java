@@ -8,7 +8,7 @@ import java.util.List;
 public class FindTableMode7 extends AbstractTableModel {
 
     private static final long serialVersionUID = 3L;
-    private final static String[] COLUMN_NAMES = {"", "Wynik", "Strona wyszukana", "Strona podoba"};
+    private final static String[] COLUMN_NAMES = {"", "Strona wyszukana", "Strona podoba", "Dopasowanie"};
     private final List<FindResult7> results = new ArrayList<>(5);
 
     public FindTableMode7() {
@@ -21,11 +21,11 @@ public class FindTableMode7 extends AbstractTableModel {
             case 0:
                 return rowIndex + 1;
             case 1:
-                return String.format("%2.2f", fr.resultScore);
-            case 2:
                 return fr.resultUrl;
-            case 3:
+            case 2:
                 return fr.similarUrl;
+            case 3:
+                return "<html>" + fr.matchStr + "</html>";
             default:
                 return "";
         }

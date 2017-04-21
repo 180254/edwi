@@ -2,19 +2,18 @@ package pl.edwi.app;
 
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
+import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.QueryBuilder;
 import pl.edwi.tool.FindResult7;
 import pl.edwi.tool.FindTableMode7;
 import pl.edwi.tool.Try;
@@ -32,17 +31,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
+@SuppressWarnings("Duplicates")
 public class App7b {
 
-    private static final Pattern QUOTATION_MARK = Pattern.compile("\"", Pattern.LITERAL);
-
     private JPanel jPanel;
-    private JTextField exactText;
-    private JButton exactButton;
-    private JTextField approxText;
-    private JButton approxButton;
+    private JTextField findText;
+    private JComboBox<String> findType;
+    private JComboBox<String> findWhere;
+    private JButton findButton;
     private JTable resultTable;
     private JLabel statusText;
 
@@ -61,7 +58,6 @@ public class App7b {
             UIManager.setLookAndFeel(WindowsLookAndFeel.class.getName());
         } catch (ClassNotFoundException | InstantiationException |
                 UnsupportedLookAndFeelException | IllegalAccessException ignored) {
-            System.out.println("X");
         }
 
         Analyzer analyzer = new StandardAnalyzer();
@@ -92,6 +88,11 @@ public class App7b {
             });
         }
 
+        app7b.findType.addItem("zawiera");
+        app7b.findType.addItem("dokładne");
+        app7b.findWhere.addItem("w treści");
+        app7b.findWhere.addItem("w adresie");
+
         app7b.jPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -99,11 +100,8 @@ public class App7b {
             }
         });
 
-        app7b.exactText.addActionListener((event) -> app7b.exactSearch(analyzer, reader));
-        app7b.exactButton.addActionListener((event) -> app7b.exactSearch(analyzer, reader));
-
-        app7b.approxButton.addActionListener((event) -> app7b.approxSearch(analyzer, reader));
-        app7b.approxText.addActionListener((event) -> app7b.approxSearch(analyzer, reader));
+        app7b.findText.addActionListener((event) -> app7b.search(analyzer, reader));
+        app7b.findButton.addActionListener((event) -> app7b.search(analyzer, reader));
 
         app7b.findTableModel = new FindTableMode7();
         app7b.resultTable.setModel(app7b.findTableModel);
@@ -112,7 +110,7 @@ public class App7b {
     // ---------------------------------------------------------------------------------------------------------------
 
     private void resizeResultTableColumns() {
-        float[] columnWidthPercentage = {2, 5, 48, 45};
+        float[] columnWidthPercentage = {2, 38, 30, 30};
         int tW = resultTable.getWidth();
 
         TableColumnModel jTableColumnModel = resultTable.getColumnModel();
@@ -127,25 +125,19 @@ public class App7b {
 
     // ---------------------------------------------------------------------------------------------------------------
 
-    private void exactSearch(Analyzer analyzer, IndexReader reader) {
-        String find0 = exactText.getText();
-        String find1 = '"' + QUOTATION_MARK.matcher(find0).replaceAll("\\\"") + '"';
-        anySearch(analyzer, reader, find1);
-    }
+    private void search(Analyzer analyzer, IndexReader reader) {
+        long currentTimeMillis = System.currentTimeMillis();
+        String findTextStr = findText.getText();
+        int findTypeIndex = findType.getSelectedIndex();
+        int findWhereIndex = findWhere.getSelectedIndex();
+        String field = findWhereIndex == 0 ? "text" : "url";
 
-    // ---------------------------------------------------------------------------------------------------------------
-
-    private void approxSearch(Analyzer analyzer, IndexReader reader) {
-        String find0 = approxText.getText();
-        String find1 = '"' + QUOTATION_MARK.matcher(find0).replaceAll("\\\"") + "\"~";
-        anySearch(analyzer, reader, find1);
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-
-    private void anySearch(Analyzer analyzer, IndexReader reader, String find) {
         try {
-            Query query = new QueryParser("text", analyzer).parse(find);
+            QueryBuilder queryBuilder = new QueryBuilder(analyzer);
+            Query query = findTypeIndex == 0
+                    ? queryBuilder.createBooleanQuery(field, findTextStr, BooleanClause.Occur.MUST) // zawiera
+                    : queryBuilder.createPhraseQuery(field, findTextStr); // dokładnie
+
             IndexSearcher searcher = new IndexSearcher(reader);
 
             MoreLikeThis mlt = new MoreLikeThis(reader);
@@ -155,7 +147,12 @@ public class App7b {
             TopDocs topDocs = searcher.search(query, 5);
             ScoreDoc[] topHits = topDocs.scoreDocs;
 
-            statusText.setText("Znaleziono " + topDocs.totalHits + " wyników.");
+            statusText.setText(
+                    String.format("Znaleziono %d wyników. (%d)", topDocs.totalHits, currentTimeMillis)
+            );
+
+            Formatter formatter = new SimpleHTMLFormatter();
+            Highlighter highlighter = new Highlighter(formatter, new QueryScorer(query));
 
             List<FindResult7> findResults = new ArrayList<>(5);
             for (ScoreDoc hit : topHits) {
@@ -163,7 +160,12 @@ public class App7b {
                 Document doc = searcher.doc(hit.doc);
 
                 fr.resultUrl = doc.get("url");
-                fr.resultScore = hit.score;
+
+                String content = doc.get(field);
+                Fields termVectors = reader.getTermVectors(hit.doc);
+                TokenStream tokenStream = TokenSources.getTokenStream(field, termVectors, content, analyzer, -1);
+                TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, content, false, 1);
+                fr.matchStr = frag[0].toString();
 
                 Query queryMlt = mlt.like(hit.doc);
                 TopDocs similarDocs = searcher.search(queryMlt, 3);
@@ -183,8 +185,12 @@ public class App7b {
             findTableModel.setModelData(findResults);
             resizeResultTableColumns();
 
-        } catch (ParseException | IOException e) {
-            statusText.setText("Wystąpił błąd: " + e.toString());
+        } catch (IOException e) {
+            statusText.setText(
+                    String.format("Wystąpił błąd %s wyników. (%d)", e.toString(), currentTimeMillis)
+            );
+        } catch (InvalidTokenOffsetsException e) {
+            e.printStackTrace();
         }
     }
 }

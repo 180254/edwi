@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 public class WebCache {
 
     public static final Pattern FILENAME_INVALID_CHARS = Pattern.compile("[^a-zA-Z0-9.-]");
+    public static final int MAX_URL_FILENAME_LEN = 260;
 
     public WebCache() {
         try {
@@ -103,6 +104,7 @@ public class WebCache {
     // ---------------------------------------------------------------------------------------------------------------
 
     private String urlToFilename(String url) {
-        return FILENAME_INVALID_CHARS.matcher(url).replaceAll("_");
+        String s = FILENAME_INVALID_CHARS.matcher(url).replaceAll("_");
+        return s.substring(0, Math.min(s.length(), MAX_URL_FILENAME_LEN));
     }
 }
