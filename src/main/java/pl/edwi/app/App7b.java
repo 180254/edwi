@@ -42,16 +42,11 @@ public class App7b {
     private JButton findButton;
     private JTable resultTable;
     private JLabel statusText;
-
     private FindTableMode7 findTableModel;
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public App7b(Analyzer analyzer, IndexReader reader) {
 
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public static void main(String[] args) throws IOException {
         try {
@@ -107,8 +102,6 @@ public class App7b {
         app7b.resultTable.setModel(app7b.findTableModel);
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void resizeResultTableColumns() {
         float[] columnWidthPercentage = {2, 38, 30, 30};
         int tW = resultTable.getWidth();
@@ -123,20 +116,21 @@ public class App7b {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void search(Analyzer analyzer, IndexReader reader) {
         long currentTimeMillis = System.currentTimeMillis();
         String findTextStr = findText.getText();
         int findTypeIndex = findType.getSelectedIndex();
         int findWhereIndex = findWhere.getSelectedIndex();
-        String field = findWhereIndex == 0 ? "text" : "url";
+        String field = findWhereIndex == 0 ? "text" : "url_1";
 
         try {
             QueryBuilder queryBuilder = new QueryBuilder(analyzer);
             Query query = findTypeIndex == 0
                     ? queryBuilder.createBooleanQuery(field, findTextStr, BooleanClause.Occur.MUST) // zawiera
                     : queryBuilder.createPhraseQuery(field, findTextStr); // dokładnie
+            if (query == null) {
+                query = new MatchAllDocsQuery();
+            }
 
             IndexSearcher searcher = new IndexSearcher(reader);
 
@@ -159,13 +153,15 @@ public class App7b {
                 FindResult7 fr = new FindResult7();
                 Document doc = searcher.doc(hit.doc);
 
-                fr.resultUrl = doc.get("url");
+                fr.resultUrl = doc.get("url_0");
 
                 String content = doc.get(field);
                 Fields termVectors = reader.getTermVectors(hit.doc);
                 TokenStream tokenStream = TokenSources.getTokenStream(field, termVectors, content, analyzer, -1);
                 TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, content, false, 1);
-                fr.matchStr = frag[0].toString();
+                if (frag.length > 0) {
+                    fr.matchStr = frag[0].toString().trim();
+                }
 
                 Query queryMlt = mlt.like(hit.doc);
                 TopDocs similarDocs = searcher.search(queryMlt, 3);
@@ -176,7 +172,7 @@ public class App7b {
                                     .findFirst()
                                     .orElse(null);
                     Document similarDoc = searcher.doc(similarHit.doc);
-                    fr.similarUrl = similarDoc.get("url");
+                    fr.similarUrl = similarDoc.get("url_0");
                 }
 
                 findResults.add(fr);
