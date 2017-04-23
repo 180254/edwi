@@ -20,6 +20,7 @@ import pl.edwi.tool.WebPage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -31,13 +32,14 @@ import java.util.stream.Stream;
 @SuppressWarnings("Duplicates")
 public class App7a {
 
-    public static final int DL_LIMIT = 10_000;
     public static final String LUCENE_DIR = "lucene7/";
-    public static final int THREAD_MULTIPLIER = 20;
+    public static final int DL_LIMIT = 25_000;
+    public static final int THREAD_MULTIPLIER = 10;
+    public static final int EXECUTOR_AWAIT_TERMINATION_MIN = 60;
 
     public static final Pattern SPACE_CHARACTER = Pattern.compile(" ", Pattern.LITERAL);
     public static final Pattern NOT_ALNUM_CHARACTER = Pattern.compile("[^\\p{L}0-9]", Pattern.UNICODE_CHARACTER_CLASS);
-    public static final Pattern REDUNDANT_END_OF_URL = Pattern.compile("(#[a-zA-Z_-]+)?/?$");
+    public static final Pattern REDUNDANT_END_OF_URL = Pattern.compile("/?(?:#[a-zA-Z0-9_-]+)?/?$");
 
     public final Logger logger = LoggerFactory.getLogger(this.getClass());
     public final int threads = Runtime.getRuntime().availableProcessors() * THREAD_MULTIPLIER;
@@ -64,14 +66,14 @@ public class App7a {
              Directory directory = FSDirectory.open(Paths.get(LUCENE_DIR));
              IndexWriter iWriter = new IndexWriter(directory, new IndexWriterConfig(analyzer))) {
 
-            logger.info("start.");
+            logger.info("start");
 
             Stream.of(
                     "https://www.p.lodz.pl/CHANGELOG.txt",
                     "http://pduch.kis.p.lodz.pl",
                     "https://pl.wikipedia.org/wiki/Komputer",
                     "http://www.ekologia.pl/wiedza/zwierzeta/ssaki",
-                    "http://agencjafilharmonia.pl/jan-sebastian-bach/"
+                    "http://agencjafilharmonia.pl/jan-sebastian-bach"
             )
                     .forEach((p) -> {
                         scheduledSet.add(p);
@@ -79,13 +81,12 @@ public class App7a {
                     });
 
             theEnd.await();
-            logger.info("the end.");
+            logger.info("the end");
 
             executor.shutdown();
-            boolean awaitTermination = executor.awaitTermination(45, TimeUnit.MINUTES);
+            boolean awaitTermination = executor.awaitTermination(EXECUTOR_AWAIT_TERMINATION_MIN, TimeUnit.MINUTES);
             logger.info("awaitTermination={}", awaitTermination);
 
-            logger.info("done.");
             logger.info("scheduledCnt={}", scheduledCounter.get());
             logger.info("scheduledSet.size={}", scheduledSet.size());
             logger.info("scheduler.completed={}", executor.getCompletedTaskCount());
@@ -94,8 +95,8 @@ public class App7a {
             logger.info("indexedSet={}", indexedSet.size());
 
             iWriter.commit();
-            Files.write(Paths.get(LUCENE_DIR + "/x-scheduled"), scheduledSet);
-            Files.write(Paths.get(LUCENE_DIR + "/x-indexed"), indexedSet);
+            Files.write(Paths.get(LUCENE_DIR + "/x-scheduled.txt"), scheduledSet);
+            Files.write(Paths.get(LUCENE_DIR + "/x-indexed.txt"), indexedSet);
         }
     }
 
@@ -106,26 +107,32 @@ public class App7a {
                 return;
             }
 
+            WebPage webPage = webDownloader.downloadPage(url);
+            /*
             WebPage webPage = webCache.getPage(url).orElse(null);
             if (webPage == null) {
                 webPage = webDownloader.downloadPage(url);
                 webCache.savePage(webPage);
             }
+            */
 
-            String sUrl = NOT_ALNUM_CHARACTER.matcher(url).replaceAll(" ");
-            String title = webPage.document().title();
+            String url_0 = URLDecoder.decode(url, "UTF-8");
+            String url_1 = NOT_ALNUM_CHARACTER.matcher(url_0).replaceAll(" ");
+            // String title = webPage.document().title();
             String text = webPage.cleanText();
 
             Document doc = new Document();
-            doc.add(new StringField("url", sUrl, Field.Store.YES));
-            doc.add(new TextField("title", title, Field.Store.YES));
+            doc.add(new StringField("url_0", url_0, Field.Store.YES));
+            doc.add(new TextField("url_1", url_1, Field.Store.YES));
+            // doc.add(new TextField("title", title, Field.Store.YES));
             doc.add(new TextField("text", text, Field.Store.YES));
             indexWriter.addDocument(doc);
 
             indexedSet.add(url);
-            int indCnt = indexedCounter.incrementAndGet();
-            if (indCnt % 200 == 0) {
-                logger.debug("counter={}", indCnt);
+
+            int indexedCnt = indexedCounter.incrementAndGet();
+            if (indexedCnt % 200 == 0) {
+                logger.debug("counter={}", indexedCnt);
             }
 
             if (scheduledCounter.get() >= DL_LIMIT) {
@@ -137,15 +144,15 @@ public class App7a {
                     .filter(p -> !p.isEmpty())
                     .filter(p -> p.startsWith("http"))
                     .map(p -> SPACE_CHARACTER.matcher(p).replaceAll("%20"))
-                    .map(p -> REDUNDANT_END_OF_URL.matcher(p).replaceAll(""))
+                    .map(p -> REDUNDANT_END_OF_URL.matcher(p).replaceFirst(""))
                     .filter(scheduledSet::add)
                     .forEach(p -> {
                         try {
                             if (!executor.isShutdown()) {
                                 executor.execute(() -> process(indexWriter, p));
 
-                                int schCnt = scheduledCounter.incrementAndGet();
-                                if (schCnt == DL_LIMIT) {
+                                int scheduledCnt = scheduledCounter.incrementAndGet();
+                                if (scheduledCnt == DL_LIMIT) {
                                     theEnd.countDown();
                                 }
                             }
