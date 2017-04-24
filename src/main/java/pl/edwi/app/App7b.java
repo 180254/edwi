@@ -129,7 +129,9 @@ public class App7b {
                     ? queryBuilder.createBooleanQuery(field, findTextStr, BooleanClause.Occur.MUST) // zawiera
                     : queryBuilder.createPhraseQuery(field, findTextStr); // dokładnie
             if (query == null) {
-                query = new MatchAllDocsQuery();
+                query = findTextStr.trim().isEmpty()
+                        ? new MatchAllDocsQuery()
+                        : new MatchNoDocsQuery();
             }
 
             IndexSearcher searcher = new IndexSearcher(reader);
