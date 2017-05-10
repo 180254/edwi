@@ -41,6 +41,10 @@ public class WebDownloader {
                 .build();
     }
 
+    public OkHttpClient getOkClient() {
+        return okClient;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------
 
     public WebPage downloadPage(String url) throws IOException {
