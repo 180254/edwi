@@ -5,14 +5,25 @@ import com.eclipsesource.json.JsonValue;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 //https://market.mashape.com/twinword/sentiment-analysis
 public class SentimentAnalyser {
 
-    private static final String SENTIMENT_ANALYSER_API_KEY = "X";
+    public static final Path SENTIMENT_ANALYSER_API_KEY_FILE = Paths.get("sentimentAnalyserApiKey.txt");
+
+    private final String sentimentAnalyserApiKey;
     private final OkHttpClient okClient;
 
-    public SentimentAnalyser(WebDownloader wd) {
+    public SentimentAnalyser(WebDownloader wd) throws IOException {
+        this.sentimentAnalyserApiKey = new String(
+                Files.readAllBytes(SENTIMENT_ANALYSER_API_KEY_FILE),
+                Charset.forName("UTF-8")
+        ).trim();
+
         this.okClient = wd.getOkClient();
     }
 
@@ -23,7 +34,7 @@ public class SentimentAnalyser {
 
         Request request = new Request.Builder()
                 .url("https://twinword-sentiment-analysis.p.mashape.com/analyze/")
-                .addHeader("X-Mashape-Key", SENTIMENT_ANALYSER_API_KEY)
+                .addHeader("X-Mashape-Key", sentimentAnalyserApiKey)
                 .post(formBody)
                 .build();
 

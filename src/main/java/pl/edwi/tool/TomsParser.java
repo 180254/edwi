@@ -30,14 +30,14 @@ public class TomsParser implements ForumParser {
         return url.contains("/forum/id-");
     }
 
-    private List<Element> selectDocPosts(Document document) {
+    public List<Element> selectDocPosts(Document document) {
         List<Element> result = Lists.mutable.empty();
         result.addAll(document.select(".thread__content"));
         result.addAll(document.select(".answer__content"));
         return result;
     }
 
-    private List<String> selectPostParagraphs(Element element) {
+    public List<String> selectPostParagraphs(Element element) {
         String html = element.html();
         String baseUri = "";
         String clean = Jsoup.clean(html, baseUri, whitelist, outputSettings);
