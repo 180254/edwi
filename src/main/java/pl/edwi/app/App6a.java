@@ -50,8 +50,6 @@ public class App6a {
     public App6a() throws IOException {
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public static void main(String[] args) throws IOException {
         try (Analyzer analyzer = new StandardAnalyzer();
              Directory index = FSDirectory.open(Paths.get(LUCENE_DIR))) {
@@ -64,8 +62,6 @@ public class App6a {
             app6a.logger.info("process.counter: {}", app6a.counter.get());
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void processAll(Analyzer analyzer, Directory index) throws IOException {
         try (IndexWriter indexWriter = new IndexWriter(index, new IndexWriterConfig(analyzer))) {
@@ -91,9 +87,6 @@ public class App6a {
             indexWriter.commit();
         }
     }
-
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void processZip(IndexWriter indexWriter, Path path) {
         try (ZipFile zipFile = new ZipFile(path.toFile())) {
@@ -122,8 +115,6 @@ public class App6a {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void processTxt(IndexWriter indexWriter, Path path) {
         if (!isNewBook(path.getFileName().toString())) {
             return;
@@ -140,8 +131,6 @@ public class App6a {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void counterPlusPlus() {
         int cnt = counter.incrementAndGet();
         if (cnt % 100 == 0) {
@@ -149,14 +138,10 @@ public class App6a {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private boolean isNewBook(String fileName) {
         Matcher matcher = FILE_FORMAT.matcher(fileName);
         return matcher.matches() && books.add(matcher.group(1));
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private Document bookDocument(Book book) throws IOException {
         Document doc = new Document();
@@ -165,8 +150,6 @@ public class App6a {
         doc.add(new TextField("content", book.getContent(), Field.Store.YES));
         return doc;
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private Book parseBook(String filename, InputStream inputStream) throws IOException {
         String raw = readInputStream(filename, inputStream);
@@ -197,8 +180,6 @@ public class App6a {
 
         return new Book(filename, title, content);
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private String readInputStream(String filename, InputStream inputStream) throws IOException {
         Charset charset;

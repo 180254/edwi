@@ -50,13 +50,9 @@ public class App6b {
 
     private FindTableMode6 findTableModel;
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public App6b(Analyzer analyzer, IndexReader reader) {
 
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public static void main(String[] args) throws IOException {
         try {
@@ -109,8 +105,6 @@ public class App6b {
         app6b.resultTable.setModel(app6b.findTableModel);
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void resizeResultTableColumns() {
         float[] columnWidthPercentage = {2, 6, 6, 40, 46};
         int tW = resultTable.getWidth();
@@ -124,8 +118,6 @@ public class App6b {
             column.setPreferredWidth(pWidth);
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void search(Analyzer analyzer, IndexReader reader, JTextField find0, String field) {
         statusText.setText("Przetwarzanie ...");

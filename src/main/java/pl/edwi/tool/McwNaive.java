@@ -12,8 +12,6 @@ public class McwNaive implements Mcw {
 
         Arrays.sort(words); // n*log(n)
 
-        // -----------------------------------------------------------------------------------------------------------
-
         List<Pair<String, Integer>> pairs = new ArrayList<>(words.length);
 
         for (int i = 0; i < words.length; i++) { // n
@@ -27,11 +25,7 @@ public class McwNaive implements Mcw {
             }
         }
 
-        // -----------------------------------------------------------------------------------------------------------
-
         pairs.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue())); // n*log(n)
-
-        // -----------------------------------------------------------------------------------------------------------
 
         List<Pair<String, Integer>> results = new ArrayList<>(k);
         for (int i = 0; i < k; i++) { // k

@@ -17,8 +17,6 @@ public class WebPage {
     public static final Pattern DOUBLE_NEWLINE = Pattern.compile("(\r?\n\\s*){2,}");
     public static final Pattern WHITESPACES = Pattern.compile("\\s+");
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private String _url;
     private String _rawText;
     private String _cleanText;
@@ -26,15 +24,10 @@ public class WebPage {
     private String[] _wordsArray;
     private SortedMap<String, Integer> _wordsMap;
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public WebPage(String _url, String _rawText) {
         this._url = _url;
         this._rawText = _rawText;
     }
-
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public String url() {
         return _url;
@@ -62,8 +55,6 @@ public class WebPage {
         return _cleanText;
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public Document document() {
         if (_document == null) {
             _document = Jsoup.parse(rawText(), url());
@@ -72,8 +63,6 @@ public class WebPage {
         return _document.clone();
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public String[] wordsArray() {
         if (_wordsArray == null) {
             _wordsArray = WHITESPACES.split(cleanText());
@@ -81,8 +70,6 @@ public class WebPage {
 
         return _wordsArray.clone();
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public SortedMap<String, Integer> wordsMap() {
         if (_wordsMap == null) {

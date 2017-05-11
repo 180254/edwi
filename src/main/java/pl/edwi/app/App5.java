@@ -97,8 +97,6 @@ public class App5 {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private boolean pathExists(String path) {
         return Paths.get(path).toFile().exists();
     }
@@ -106,8 +104,6 @@ public class App5 {
     private void createDir(String path) throws IOException {
         Files.createDirectories(Paths.get(path));
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void downloadCatalog() throws IOException {
         byte[] catalog = webDownloader.downloadBytes(CATALOG_URL);
@@ -136,8 +132,6 @@ public class App5 {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void parseCatalog() throws FileNotFoundException {
         FileInputStream fileStream = new FileInputStream(CATALOG_FILE_MARC);
         MarcReader mr = new MarcStreamReader(fileStream);
@@ -158,8 +152,6 @@ public class App5 {
             books.add(new Book(id, titleFix));
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void createLuceneIndex() throws IOException {
         IndexWriterConfig config = new IndexWriterConfig(analyzer);

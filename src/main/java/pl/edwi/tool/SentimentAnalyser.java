@@ -9,7 +9,7 @@ import java.io.IOException;
 //https://market.mashape.com/twinword/sentiment-analysis
 public class SentimentAnalyser {
 
-    private static final String X_API_KEY = "X";
+    private static final String SENTIMENT_ANALYSER_API_KEY = "X";
     private final OkHttpClient okClient;
 
     public SentimentAnalyser(WebDownloader wd) {
@@ -23,7 +23,7 @@ public class SentimentAnalyser {
 
         Request request = new Request.Builder()
                 .url("https://twinword-sentiment-analysis.p.mashape.com/analyze/")
-                .addHeader("X-Mashape-Key", X_API_KEY)
+                .addHeader("X-Mashape-Key", SENTIMENT_ANALYSER_API_KEY)
                 .post(formBody)
                 .build();
 

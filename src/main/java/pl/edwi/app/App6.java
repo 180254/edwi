@@ -61,8 +61,6 @@ public class App6 {
     public App6() throws IOException {
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public static void main(String[] args) throws IOException {
         try (Analyzer analyzer = new StandardAnalyzer();
              Directory index = FSDirectory.open(Paths.get(LUCENE_DIR))) {
@@ -93,8 +91,6 @@ public class App6 {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void processAll(Analyzer analyzer, Directory index) throws IOException {
         try (IndexWriter indexWriter = new IndexWriter(index, new IndexWriterConfig(analyzer))) {
 
@@ -119,9 +115,6 @@ public class App6 {
             indexWriter.commit();
         }
     }
-
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void processZip(IndexWriter indexWriter, Path path) {
         try (ZipFile zipFile = new ZipFile(path.toFile())) {
@@ -150,8 +143,6 @@ public class App6 {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void processTxt(IndexWriter indexWriter, Path path) {
         if (!isNewBook(path.getFileName().toString())) {
             return;
@@ -168,8 +159,6 @@ public class App6 {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void counterPlusPlus() {
         int cnt = counter.incrementAndGet();
         if (cnt % 100 == 0) {
@@ -177,14 +166,10 @@ public class App6 {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private boolean isNewBook(String fileName) {
         Matcher matcher = FILE_FORMAT.matcher(fileName);
         return matcher.matches() && books.add(matcher.group(1));
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private Document bookDocument(Book book) throws IOException {
         Document doc = new Document();
@@ -193,8 +178,6 @@ public class App6 {
         doc.add(new TextField("content", book.getContent(), Field.Store.YES));
         return doc;
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private Book parseBook(String filename, InputStream inputStream) throws IOException {
         String raw = readInputStream(filename, inputStream);
@@ -226,8 +209,6 @@ public class App6 {
         return new Book(filename, title, content);
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private String readInputStream(String filename, InputStream inputStream) throws IOException {
         Charset charset;
         if (filename.contains("-0") || filename.contains("_0")) {
@@ -249,8 +230,6 @@ public class App6 {
             return result.toString(charset.name());
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void doSearchTask(Analyzer analyzer, Directory index, String find)
             throws ParseException, IOException, InvalidTokenOffsetsException {

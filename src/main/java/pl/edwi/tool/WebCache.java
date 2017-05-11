@@ -23,8 +23,6 @@ public class WebCache {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public Optional<WebPage> getPage(String url) {
         return read(url, "cache/page/", ".html")
                 .map((content) -> new WebPage(url, content));
@@ -35,8 +33,6 @@ public class WebCache {
         // save(page.url(), "cache/page/", ".txt", page.cleanText());
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public Optional<String> getIp(String host) {
         return read(host, "cache/ip/", ".txt");
     }
@@ -44,8 +40,6 @@ public class WebCache {
     public void saveIp(String host, String ip) {
         save(host, "cache/ip/", ".txt", ip);
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public String getRobots(String url, WebDownloader wd) {
         int slash = url.indexOf('/', 8);
@@ -67,8 +61,6 @@ public class WebCache {
         }
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private Optional<String> read(String url, String prefix, String suffix) {
         String filename = prefix + urlToFilename(url) + suffix;
         Path path = Paths.get(filename);
@@ -81,8 +73,6 @@ public class WebCache {
             return Optional.empty();
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private void save(String url, String prefix, String suffix, String content) {
         String filename = prefix + urlToFilename(url) + suffix;
@@ -100,8 +90,6 @@ public class WebCache {
             System.out.printf("WEB CACHE SAVE FAIL %s %s %s%n", url, prefix, suffix);
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private String urlToFilename(String url) {
         String s = FILENAME_INVALID_CHARS.matcher(url).replaceAll("_");

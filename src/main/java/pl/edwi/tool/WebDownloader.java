@@ -18,13 +18,9 @@ public class WebDownloader {
 
     public static final String USER_AGENT = "some-robot-agent/1.0";
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     public static final Set<String> ALLOWED_TYPES = ImmutableSet.of(
             "text/html", "application/xhtml+xml", "text/plain"
     );
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private final OkHttpClient okClient;
 
@@ -44,8 +40,6 @@ public class WebDownloader {
     public OkHttpClient getOkClient() {
         return okClient;
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     public WebPage downloadPage(String url) throws IOException {
         return downloadPage(url, null);
@@ -92,8 +86,6 @@ public class WebDownloader {
             return response.body().bytes();
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private Charset checkCharset(Response response, byte[] pageBytes) throws IOException {
         Charset charset = response.body().contentType().charset();
@@ -143,8 +135,6 @@ public class WebDownloader {
 
         return charset;
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private boolean hasValidCode(Response response) {
         return response.isSuccessful();

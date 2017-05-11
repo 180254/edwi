@@ -55,8 +55,6 @@ public class TextComparator {
         return numerator / denominator;
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-
     private void fillTheDictionary(
             SortedMap<String, Integer> source,
             SortedMap<String, Integer> destination
@@ -65,8 +63,6 @@ public class TextComparator {
             destination.putIfAbsent(word, 0);
         }
     }
-
-    // ---------------------------------------------------------------------------------------------------------------
 
     private double[] computeVector(SortedMap<String, Integer> wordMap) {
         double numberOfWords = numberOfWords(wordMap);
