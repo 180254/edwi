@@ -1,11 +1,12 @@
 package pl.edwi.search;
 
-import com.google.common.base.MoreObjects;
+import okhttp3.*;
 import org.eclipse.collections.impl.factory.Lists;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import pl.edwi.web.WebDownloader;
-import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -13,49 +14,67 @@ import java.util.List;
 
 public class DuckDuckGoSearch {
 
-    private final WebDownloader webDownloader;
+    private final OkHttpClient okClient;
 
     public DuckDuckGoSearch(WebDownloader webDownloader) {
-        this.webDownloader = webDownloader;
+        this.okClient = webDownloader.getOkClient();
     }
 
-    public void search(String phrase) throws IOException {
-        String param = URLEncoder.encode(phrase, "utf-8");
-        String url = "https://duckduckgo.com/html/?q=" + param;
-        WebPage webPage = webDownloader.downloadPage(url);
-        Document document = webPage.document();
-
+    public List<SearchResult> search(String phrase, int limit) throws IOException {
         List<SearchResult> results = Lists.mutable.empty();
 
-        for (Element find : document.select("div.result")) {
-            String srTitle = find.select(".result__title").text();
-            String srContext = find.select(".result__snippet").text();
-            String srUrl = find.select(".result__snippet").attr("href");
-            results.add(new SearchResult(srTitle, srContext, srUrl));
-        }
+        String param = URLEncoder.encode(phrase, "utf-8");
+        String url = "https://duckduckgo.com/html/?q=" + param;
+        Request request = new Request.Builder().url(url).build();
 
+        do {
+            Call call = okClient.newCall(request);
+            try (Response response = call.execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Not successful " + response);
+                }
 
+                try (ResponseBody responseBody = response.body()) {
+                    String html = responseBody.string();
+                    Document document = Jsoup.parse(html);
+
+                    for (Element find : document.select("div.result")) {
+                        String srTitle = find.select(".result__title").text();
+                        String srContext = find.select(".result__snippet").text();
+                        String srUrl = find.select(".result__snippet").attr("href");
+
+                        if (!srTitle.isEmpty()) {
+                            results.add(new SearchResult(srTitle, srContext, srUrl));
+                        }
+                    }
+
+                    request = results.size() < limit
+                            ? nextPage(document)
+                            : null;
+                }
+            }
+        } while (request != null);
+
+        return results;
     }
 
-    public static class SearchResult {
+    private Request nextPage(Document document) {
+        Request request;
+        Elements next = document.select(".nav-link form input");
+        if (next.isEmpty()) {
+            request = null;
+        } else {
+            FormBody.Builder postBuilder = new FormBody.Builder();
 
-        public final String title;
-        public final String context;
-        public final String url;
+            for (Element input : next) {
+                postBuilder.add(input.attr("name"), input.attr("value"));
+            }
 
-        public SearchResult(String title, String context, String url) {
-            this.title = title;
-            this.context = context;
-            this.url = url;
+            request = new Request.Builder()
+                    .url("https://duckduckgo.com/html/")
+                    .post(postBuilder.build())
+                    .build();
         }
-
-        @Override
-        public String toString() {
-            return MoreObjects.toStringHelper(this)
-                    .add("title", title)
-                    .add("context", context)
-                    .add("url", url)
-                    .toString();
-        }
+        return request;
     }
 }

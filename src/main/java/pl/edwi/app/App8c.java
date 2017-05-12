@@ -1,30 +1,65 @@
 package pl.edwi.app;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonValue;
-import com.google.common.io.CharStreams;
+import com.google.common.base.MoreObjects;
+import pl.edwi.search.DuckDuckGoSearch;
+import pl.edwi.search.SearchResult;
+import pl.edwi.sentiment.Sentiment;
+import pl.edwi.sentiment.SentimentAnalyser;
 import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 public class App8c {
 
+    public static final int SEARCH_LIMIT = 100;
+
+    private final WebDownloader webDownloader = new WebDownloader();
+    private final DuckDuckGoSearch searchEngine = new DuckDuckGoSearch(webDownloader);
+    private final SentimentAnalyser sentimentAnalyser = new SentimentAnalyser(webDownloader);
+
     public static void main(String[] args) throws IOException {
-        String google = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=";
-        String search = "stackoverflow";
-        String charset = "UTF-8";
+        new App8c().go();
+    }
 
-        WebDownloader webDownloader = new WebDownloader();
+    public App8c() throws IOException {
+    }
 
-        URL url = new URL(google + URLEncoder.encode(search, charset));
-        try (Reader reader = new InputStreamReader(url.openStream(), charset)) {
-            String response = CharStreams.toString(reader);
-            JsonValue parse = Json.parse(response);
-            System.out.println(parse.toString());
+    public void go() {
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                System.out.print("> ");
+                System.out.flush();
+                String searching = scanner.nextLine().trim();
+
+                if (searching.equals("q")) {
+                    break;
+                } else {
+                    try {
+                        Map<String, Integer> sentiments = new HashMap<>(SEARCH_LIMIT);
+
+                        for (SearchResult searchResult : searchEngine.search("site:linustechtips.com " + searching, SEARCH_LIMIT)) {
+                            Sentiment sentiment = sentimentAnalyser.analyze(searchResult.context);
+                            sentiments.compute(sentiment.name(), (key, value) -> MoreObjects.firstNonNull(value, 0) + 1);
+                        }
+
+                        int sum = sentiments.values().stream().mapToInt(i -> i).sum();
+                        printInfo(sentiments, sum, "Negative", "NEGATIVE");
+                        printInfo(sentiments, sum, "Neutral", "NEUTRAL");
+                        printInfo(sentiments, sum, "Positive", "POSITIVE");
+
+                    } catch (Exception e) {
+                        System.out.println("Processing failed " + e.toString());
+                    }
+                }
+            }
         }
+    }
+
+    public void printInfo(Map<String, Integer> map, int sumOfValues, String printName, String mapKey) {
+        int value = map.getOrDefault(mapKey, 0);
+        System.out.printf("%s: %d (%.2f%%)%n", printName, value, (double) value / sumOfValues * 100);
     }
 }
