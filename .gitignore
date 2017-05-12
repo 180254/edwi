@@ -9,6 +9,7 @@ pgdvd042010.iso
 pgdvd042010/
 lucene/*
 lucene7/*
+lucene8/*
 !.keep
 
 ## Maven

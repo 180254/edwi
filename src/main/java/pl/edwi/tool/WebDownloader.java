@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 
 public class WebDownloader {
 
-    public static final String USER_AGENT = "some-robot-agent/1.0";
+    public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 
     public static final Set<String> ALLOWED_TYPES = ImmutableSet.of(
             "text/html", "application/xhtml+xml", "text/plain"
@@ -56,7 +56,9 @@ public class WebDownloader {
         try (Response response = call.execute()) {
             if (!hasValidCode(response)) {
                 int code = response.code();
-                throw new IOException("Fail: response.code = " + code + " so != successful.");
+                if (code != 420) {
+                    throw new IOException("Fail: response.code = " + code + " so != successful.");
+                }
             }
 
             if (!hasValidType(response)) {
