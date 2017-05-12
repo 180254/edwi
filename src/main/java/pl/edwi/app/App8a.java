@@ -12,7 +12,12 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.edwi.tool.*;
+import pl.edwi.forum.ForumParser;
+import pl.edwi.forum.LttParser;
+import pl.edwi.sentiment.Sentiment;
+import pl.edwi.sentiment.SentimentAnalyser;
+import pl.edwi.web.WebDownloader;
+import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 import java.nio.file.Files;

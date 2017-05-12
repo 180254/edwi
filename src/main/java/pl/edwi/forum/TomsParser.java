@@ -1,4 +1,4 @@
-package pl.edwi.tool;
+package pl.edwi.forum;
 
 import org.eclipse.collections.impl.factory.Lists;
 import org.jsoup.Jsoup;

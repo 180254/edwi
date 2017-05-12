@@ -6,9 +6,9 @@ import io.mola.galimatias.URL;
 import io.mola.galimatias.URLParsingSettings;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import pl.edwi.tool.WebCache;
-import pl.edwi.tool.WebDownloader;
-import pl.edwi.tool.WebPage;
+import pl.edwi.web.WebCache;
+import pl.edwi.web.WebDownloader;
+import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 import java.net.InetAddress;

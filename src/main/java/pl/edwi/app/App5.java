@@ -27,7 +27,7 @@ import org.marc4j.marc.Subfield;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.edwi.tool.Book;
-import pl.edwi.tool.WebDownloader;
+import pl.edwi.web.WebDownloader;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

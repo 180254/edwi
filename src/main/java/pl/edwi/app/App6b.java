@@ -17,9 +17,9 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import pl.edwi.tool.FindResult6;
-import pl.edwi.tool.FindTableMode6;
 import pl.edwi.tool.Try;
+import pl.edwi.ui.FindResult6;
+import pl.edwi.ui.FindTableMode6;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;

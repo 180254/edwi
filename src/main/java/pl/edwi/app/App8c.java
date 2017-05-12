@@ -3,7 +3,7 @@ package pl.edwi.app;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonValue;
 import com.google.common.io.CharStreams;
-import pl.edwi.tool.WebDownloader;
+import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

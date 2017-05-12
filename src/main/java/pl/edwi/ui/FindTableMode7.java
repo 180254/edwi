@@ -1,33 +1,31 @@
-package pl.edwi.tool;
+package pl.edwi.ui;
 
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FindTableMode6 extends AbstractTableModel {
+public class FindTableMode7 extends AbstractTableModel {
 
     private static final long serialVersionUID = 3L;
-    private final static String[] COLUMN_NAMES = {"", "Ocena", "Id", "Tytuł", "Wyszukana treść"};
-    private final List<FindResult6> results = new ArrayList<>(100);
+    private final static String[] COLUMN_NAMES = {"", "Strona wyszukana", "Strona podoba", "Dopasowanie"};
+    private final List<FindResult7> results = new ArrayList<>(5);
 
-    public FindTableMode6() {
+    public FindTableMode7() {
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        FindResult6 fr = results.get(rowIndex);
+        FindResult7 fr = results.get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return rowIndex + 1;
             case 1:
-                return String.format("%2.2f", fr.score);
+                return fr.resultUrl;
             case 2:
-                return fr.id;
+                return fr.similarUrl;
             case 3:
-                return fr.title;
-            case 4:
-                return "<html>" + fr.text + "</html>";
+                return "<html>" + fr.matchStr + "</html>";
             default:
                 return "";
         }
@@ -53,7 +51,7 @@ public class FindTableMode6 extends AbstractTableModel {
         return true;
     }
 
-    public void setModelData(List<FindResult6> results) {
+    public void setModelData(List<FindResult7> results) {
         this.results.clear();
         this.results.addAll(results);
         fireTableDataChanged();

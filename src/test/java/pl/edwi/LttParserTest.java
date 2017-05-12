@@ -2,10 +2,10 @@ package pl.edwi;
 
 import org.jsoup.nodes.Document;
 import org.junit.Test;
-import pl.edwi.tool.ForumParser;
-import pl.edwi.tool.LttParser;
-import pl.edwi.tool.WebDownloader;
-import pl.edwi.tool.WebPage;
+import pl.edwi.forum.ForumParser;
+import pl.edwi.forum.LttParser;
+import pl.edwi.web.WebDownloader;
+import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 

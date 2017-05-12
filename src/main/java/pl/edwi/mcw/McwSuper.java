@@ -1,6 +1,7 @@
-package pl.edwi.tool;
+package pl.edwi.mcw;
 
 import com.google.common.base.MoreObjects;
+import pl.edwi.tool.Pair;
 
 import java.util.HashMap;
 import java.util.List;

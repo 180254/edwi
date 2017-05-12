@@ -1,8 +1,9 @@
-package pl.edwi.tool;
+package pl.edwi.sentiment;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonValue;
 import okhttp3.*;
+import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

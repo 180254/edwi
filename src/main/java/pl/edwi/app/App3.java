@@ -1,8 +1,8 @@
 package pl.edwi.app;
 
-import pl.edwi.tool.TextComparator;
-import pl.edwi.tool.WebDownloader;
-import pl.edwi.tool.WebPage;
+import pl.edwi.cmp.TextComparator;
+import pl.edwi.web.WebDownloader;
+import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 import java.util.Comparator;

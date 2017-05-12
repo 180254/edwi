@@ -1,4 +1,7 @@
-package pl.edwi.tool;
+package pl.edwi.cmp;
+
+import pl.edwi.web.WebDownloader;
+import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 import java.util.Collections;

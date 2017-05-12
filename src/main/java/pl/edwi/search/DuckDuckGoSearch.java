@@ -1,9 +1,11 @@
-package pl.edwi.tool;
+package pl.edwi.search;
 
 import com.google.common.base.MoreObjects;
 import org.eclipse.collections.impl.factory.Lists;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import pl.edwi.web.WebDownloader;
+import pl.edwi.web.WebPage;
 
 import java.io.IOException;
 import java.net.URLEncoder;

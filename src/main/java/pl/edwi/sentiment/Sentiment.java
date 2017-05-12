@@ -1,4 +1,4 @@
-package pl.edwi.tool;
+package pl.edwi.sentiment;
 
 public enum Sentiment {
 

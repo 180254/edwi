@@ -1,4 +1,6 @@
-package pl.edwi.tool;
+package pl.edwi.mcw;
+
+import pl.edwi.tool.Pair;
 
 import java.util.List;
 

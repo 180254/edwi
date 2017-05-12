@@ -1,4 +1,4 @@
-package pl.edwi.tool;
+package pl.edwi.forum;
 
 
 import org.jsoup.nodes.Document;

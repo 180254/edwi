@@ -1,4 +1,4 @@
-package pl.edwi.tool;
+package pl.edwi.web;
 
 import com.google.common.base.MoreObjects;
 import org.jsoup.Jsoup;

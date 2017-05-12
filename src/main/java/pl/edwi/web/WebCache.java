@@ -1,4 +1,4 @@
-package pl.edwi.tool;
+package pl.edwi.web;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
