@@ -1,24 +1,29 @@
 package pl.edwi.app;
 
 import com.google.common.base.MoreObjects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.edwi.search.DuckDuckGoSearch;
 import pl.edwi.search.SearchResult;
 import pl.edwi.sentiment.Sentiment;
 import pl.edwi.sentiment.SentimentAnalyser;
+import pl.edwi.sentiment.TpSentimentAnalyser;
 import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class App8c {
 
-    public static final int SEARCH_LIMIT = 100;
+    public static final int SEARCH_LIMIT = 1_000;
 
+    public final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final WebDownloader webDownloader = new WebDownloader();
     private final DuckDuckGoSearch searchEngine = new DuckDuckGoSearch(webDownloader);
-    private final SentimentAnalyser sentimentAnalyser = new SentimentAnalyser(webDownloader);
+    private final SentimentAnalyser sentimentAnalyser = new TpSentimentAnalyser(webDownloader);
 
     public static void main(String[] args) throws IOException {
         new App8c().go();
@@ -38,12 +43,25 @@ public class App8c {
                     break;
                 } else {
                     try {
-                        Map<String, Integer> sentiments = new HashMap<>(SEARCH_LIMIT);
+                        logger.info("state: start");
 
-                        for (SearchResult searchResult : searchEngine.search("site:linustechtips.com " + searching, SEARCH_LIMIT)) {
-                            Sentiment sentiment = sentimentAnalyser.analyze(searchResult.context);
-                            sentiments.compute(sentiment.name(), (key, value) -> MoreObjects.firstNonNull(value, 0) + 1);
-                        }
+                        String phrase = "site:linustechtips.com " + searching;
+                        List<SearchResult> searchResults = searchEngine.search(phrase, SEARCH_LIMIT);
+                        logger.info("state: search");
+
+                        Map<String, Integer> sentiments = new ConcurrentHashMap<>(SEARCH_LIMIT);
+                        searchResults
+                                .stream()
+                                .parallel()
+                                .forEach(searchResult -> {
+                                    try {
+                                        Sentiment sentiment = sentimentAnalyser.analyze(searchResult.context);
+                                        sentiments.compute(sentiment.name(), (key, value) -> MoreObjects.firstNonNull(value, 0) + 1);
+                                    } catch (IOException e) {
+                                        logger.info("exception: []", e.toString());
+                                    }
+                                });
+                        logger.info("state: sentiment");
 
                         int sum = sentiments.values().stream().mapToInt(i -> i).sum();
                         printInfo(sentiments, sum, "Negative", "NEGATIVE");
@@ -51,7 +69,7 @@ public class App8c {
                         printInfo(sentiments, sum, "Positive", "POSITIVE");
 
                     } catch (Exception e) {
-                        System.out.println("Processing failed " + e.toString());
+                        logger.warn("Processing failed {}", e.toString());
                     }
                 }
             }
@@ -60,6 +78,7 @@ public class App8c {
 
     public void printInfo(Map<String, Integer> map, int sumOfValues, String printName, String mapKey) {
         int value = map.getOrDefault(mapKey, 0);
-        System.out.printf("%s: %d (%.2f%%)%n", printName, value, (double) value / sumOfValues * 100);
+        String msg = String.format("%s: %d (%.2f%%)", printName, value, (double) value / sumOfValues * 100);
+        logger.info(msg);
     }
 }

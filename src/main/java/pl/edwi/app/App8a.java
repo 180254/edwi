@@ -13,9 +13,10 @@ import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.edwi.forum.ForumParser;
-import pl.edwi.forum.LttParser;
+import pl.edwi.forum.TomsParser;
 import pl.edwi.sentiment.Sentiment;
 import pl.edwi.sentiment.SentimentAnalyser;
+import pl.edwi.sentiment.TnSentimentAnalyser;
 import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
 
@@ -46,8 +47,8 @@ public class App8a {
     public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
 
     public final WebDownloader webDownloader = new WebDownloader();
-    public final ForumParser forumParser = new LttParser();
-    public final SentimentAnalyser sentimentAnalyser = new SentimentAnalyser(webDownloader);
+    public final ForumParser forumParser = new TomsParser();
+    public final SentimentAnalyser sentimentAnalyser = new TnSentimentAnalyser(webDownloader);
 
     public final AtomicInteger siteCounter = new AtomicInteger();
     public final AtomicInteger threadCounter = new AtomicInteger();
