@@ -18,11 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class App8c {
 
-    public static final int SEARCH_LIMIT = 1_000;
+    public static final int SEARCH_LIMIT = 100;
 
     public final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final WebDownloader webDownloader = new WebDownloader();
-    private final DuckDuckGoSearch searchEngine = new DuckDuckGoSearch(webDownloader);
+    private final DuckDuckGoSearch ddgSearchEngine = new DuckDuckGoSearch(webDownloader);
     private final SentimentAnalyser sentimentAnalyser = new TpSentimentAnalyser(webDownloader);
 
     public static void main(String[] args) throws IOException {
@@ -46,7 +46,7 @@ public class App8c {
                         logger.info("state: start");
 
                         String phrase = "site:linustechtips.com " + searching;
-                        List<SearchResult> searchResults = searchEngine.search(phrase, SEARCH_LIMIT);
+                        List<SearchResult> searchResults = ddgSearchEngine.search(phrase, SEARCH_LIMIT);
                         logger.info("state: search");
 
                         Map<String, Integer> sentiments = new ConcurrentHashMap<>(SEARCH_LIMIT);

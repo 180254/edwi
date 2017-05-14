@@ -6,6 +6,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -48,22 +49,38 @@ public class App8b {
     public void process(Analyzer analyzer, Directory index, String find) throws Exception {
         try (IndexReader reader = DirectoryReader.open(index)) {
             Query query = new QueryParser("par", analyzer).parse(find);
-
             IndexSearcher searcher = new IndexSearcher(reader);
-            TopDocs docs = searcher.search(query, BooleanQuery.getMaxClauseCount());
-            ScoreDoc[] hits = docs.scoreDocs;
-
-            System.out.println("Found " + docs.totalHits + " hits.");
-
             Map<String, Integer> sentiments = new HashMap<>(1000);
-            for (ScoreDoc hit : hits) {
-                int docId = hit.doc;
-                Document doc = searcher.doc(docId);
-                String sentiment = doc.get("sen");
-                sentiments.compute(sentiment, (key, value) -> MoreObjects.firstNonNull(value, 0) + 1);
-            }
+
+            LeafCollector leafCollector = new LeafCollector() {
+                @Override
+                public void setScorer(Scorer scorer) throws IOException {
+                }
+
+                @Override
+                public void collect(int docId) throws IOException {
+                    Document doc = searcher.doc(docId);
+                    String sentiment = doc.get("sen");
+                    sentiments.compute(sentiment, (key, value) -> MoreObjects.firstNonNull(value, 0) + 1);
+                }
+            };
+
+            Collector collector = new Collector() {
+                @Override
+                public LeafCollector getLeafCollector(LeafReaderContext context) throws IOException {
+                    return leafCollector;
+                }
+
+                @Override
+                public boolean needsScores() {
+                    return false;
+                }
+            };
+
+            searcher.search(query, collector);
 
             int sum = sentiments.values().stream().mapToInt(i -> i).sum();
+            System.out.println("Found " + sum + " hits.");
             printInfo(sentiments, sum, "Negative", "NEGATIVE");
             printInfo(sentiments, sum, "Neutral", "NEUTRAL");
             printInfo(sentiments, sum, "Positive", "POSITIVE");

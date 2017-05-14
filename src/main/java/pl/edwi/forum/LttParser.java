@@ -4,14 +4,15 @@ package pl.edwi.forum;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class LttParser implements ForumParser {
 
     @Override
-    public String startUrl() {
-        return "https://linustechtips.com/main/";
+    public List<String> startUrls() {
+        return Collections.singletonList("https://linustechtips.com/main/");
     }
 
     @Override

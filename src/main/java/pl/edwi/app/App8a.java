@@ -35,9 +35,9 @@ import java.util.regex.Pattern;
 public class App8a {
 
     public static final String LUCENE_DIR = "lucene8/";
-    public static final int DL_LIMIT = 2_000;
+    public static final int DL_LIMIT = 1_000_000;
     public static final int THREAD_MULTIPLIER = 10;
-    public static final int EXECUTOR_AWAIT_TERMINATION_MIN = 120;
+    public static final int EXECUTOR_AWAIT_TERMINATION_MIN = 60 * 7;
 
     public static final Pattern SPACE_CHARACTER = Pattern.compile(" ", Pattern.LITERAL);
     public static final Pattern REDUNDANT_END_OF_URL = Pattern.compile("/?(?:#[a-zA-Z0-9_-]+)?/?$");
@@ -69,8 +69,10 @@ public class App8a {
              Directory directory = FSDirectory.open(Paths.get(LUCENE_DIR));
              IndexWriter iWriter = new IndexWriter(directory, new IndexWriterConfig(analyzer))) {
 
-            scheduledSet.add(forumParser.startUrl());
-            executor.execute(() -> process(iWriter, forumParser.startUrl()));
+            forumParser.startUrls().forEach((startUrl) -> {
+                scheduledSet.add(startUrl);
+                executor.execute(() -> process(iWriter, startUrl));
+            });
 
             boolean awaitTermination = executor.awaitTermination(EXECUTOR_AWAIT_TERMINATION_MIN, TimeUnit.MINUTES);
             logger.info("awaitTermination={}", awaitTermination);
@@ -120,21 +122,22 @@ public class App8a {
                 }
 
                 incrementAndDebug(threadCounter, "TH");
+
+            } else {
+                webPage.document()
+                        .select("a[href]").stream()
+                        .map(p -> p.attr("abs:href"))
+                        .filter(p -> !p.isEmpty())
+                        .filter(p -> p.startsWith("http"))
+                        .filter(forumParser::isThatUrlForum)
+                        .map(p -> SPACE_CHARACTER.matcher(p).replaceAll("%20"))
+                        .map(p -> REDUNDANT_END_OF_URL.matcher(p).replaceFirst(""))
+                        .filter(p -> scheduledSet.size() < DL_LIMIT)
+                        .filter(scheduledSet::add)
+                        .forEach((u) -> executor.execute(() -> process(indexWriter, u)));
             }
 
             incrementAndDebug(siteCounter, "SI");
-
-            webPage.document()
-                    .select("a[href]").stream()
-                    .map(p -> p.attr("abs:href"))
-                    .filter(p -> !p.isEmpty())
-                    .filter(p -> p.startsWith("http"))
-                    .filter(forumParser::isThatUrlForum)
-                    .map(p -> SPACE_CHARACTER.matcher(p).replaceAll("%20"))
-                    .map(p -> REDUNDANT_END_OF_URL.matcher(p).replaceFirst(""))
-                    .filter(p -> scheduledSet.size() < DL_LIMIT)
-                    .filter(scheduledSet::add)
-                    .forEach((u) -> executor.execute(() -> process(indexWriter, u)));
 
         } catch (IOException e) {
             logger.info("process.exception.a: {} {}", url, e.toString());

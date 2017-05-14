@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ForumParser {
 
-    String startUrl();
+    List<String> startUrls();
 
     boolean isThatUrlForum(String url);
 
