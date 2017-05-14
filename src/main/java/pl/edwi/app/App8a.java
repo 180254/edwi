@@ -16,7 +16,7 @@ import pl.edwi.forum.AvParser;
 import pl.edwi.forum.ForumParser;
 import pl.edwi.sentiment.Sentiment;
 import pl.edwi.sentiment.SentimentAnalyser;
-import pl.edwi.sentiment.TnSentimentAnalyser;
+import pl.edwi.sentiment.TsSentimentAnalyser;
 import pl.edwi.web.WebDownloader;
 import pl.edwi.web.WebPage;
 
@@ -36,8 +36,8 @@ public class App8a {
 
     public static final String LUCENE_DIR = "lucene8/";
     public static final int DL_LIMIT = 10_000_000;
-    public static final int THREAD_MULTIPLIER = 10;
-    public static final int EXECUTOR_AWAIT_TERMINATION_MIN = 60 * 9;
+    public static final int THREAD_MULTIPLIER = 15;
+    public static final int EXECUTOR_AWAIT_TERMINATION_MIN = 60 * 8;
 
     public static final Pattern SPACE_CHARACTER = Pattern.compile(" ", Pattern.LITERAL);
     public static final Pattern REDUNDANT_END_OF_URL = Pattern.compile("/?(?:#[a-zA-Z0-9_-]+)?/?$");
@@ -46,9 +46,9 @@ public class App8a {
     public final int threads = Runtime.getRuntime().availableProcessors() * THREAD_MULTIPLIER;
     public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
 
-    public final WebDownloader webDownloader = new WebDownloader();
+    public final WebDownloader webDownloader = new WebDownloader(executor);
     public final ForumParser forumParser = new AvParser();
-    public final SentimentAnalyser sentimentAnalyser = new TnSentimentAnalyser(webDownloader);
+    public final SentimentAnalyser sentimentAnalyser = new TsSentimentAnalyser(webDownloader);
 
     public final AtomicInteger siteCounter = new AtomicInteger();
     public final AtomicInteger threadCounter = new AtomicInteger();
@@ -118,6 +118,7 @@ public class App8a {
 
                     } catch (IOException e) {
                         logger.info("process.exception.b: {} {}", url, e.toString());
+
                     }
                 }
 

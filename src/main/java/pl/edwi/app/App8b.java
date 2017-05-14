@@ -28,6 +28,7 @@ public class App8b {
         try (Scanner scanner = new Scanner(System.in);
              Analyzer analyzer = new StandardAnalyzer();
              Directory index = FSDirectory.open(Paths.get(App8a.LUCENE_DIR))) {
+
             while (true) {
                 System.out.print("> ");
                 System.out.flush();

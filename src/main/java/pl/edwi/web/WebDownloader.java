@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class WebDownloader {
 
@@ -25,16 +26,23 @@ public class WebDownloader {
     private final OkHttpClient okClient;
 
     public WebDownloader() {
-        this.okClient = new OkHttpClient.Builder()
+        this.okClient = initOkBuilder()
                 .build();
     }
 
     public WebDownloader(ExecutorService executorService) {
         Dispatcher dispatcher = new Dispatcher(executorService);
 
-        this.okClient = new OkHttpClient.Builder()
+        this.okClient = initOkBuilder()
                 .dispatcher(dispatcher)
                 .build();
+    }
+
+    private OkHttpClient.Builder initOkBuilder() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .writeTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS);
     }
 
     public OkHttpClient getOkClient() {

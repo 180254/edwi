@@ -1,6 +1,5 @@
 package pl.edwi.sentiment;
 
-
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonValue;
 import okhttp3.*;
@@ -8,6 +7,7 @@ import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
 
+//http://text-processing.com/docs/sentiment.html
 public class TpSentimentAnalyser implements SentimentAnalyser {
 
     private final OkHttpClient okClient;
