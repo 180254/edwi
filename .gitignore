@@ -11,6 +11,7 @@ lucene/*
 lucene7/*
 lucene8/*
 !.keep
+!tasks.txt
 
 ## Maven
 target/
