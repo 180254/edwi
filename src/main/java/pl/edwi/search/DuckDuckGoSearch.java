@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
 
-public class DuckDuckGoSearch {
+public class DuckDuckGoSearch implements SearchEngine {
 
     private final OkHttpClient okClient;
 
@@ -20,6 +20,7 @@ public class DuckDuckGoSearch {
         this.okClient = webDownloader.getOkClient();
     }
 
+    @Override
     public List<SearchResult> search(String phrase, int limit) throws IOException {
         List<SearchResult> results = Lists.mutable.empty();
 
@@ -31,31 +32,22 @@ public class DuckDuckGoSearch {
             Call call = okClient.newCall(request);
             try (Response response = call.execute()) {
                 if (!response.isSuccessful()) {
-                    throw new IOException("Not successful " + response);
+                    throw new IOException("Not successful. Response: " + response);
                 }
 
                 try (ResponseBody responseBody = response.body()) {
                     String html = responseBody.string();
                     Document document = Jsoup.parse(html);
 
-                    for (Element find : document.select("div.result")) {
-                        String srTitle = find.select(".result__title").text();
-                        String srContext = find.select(".result__snippet").text();
-                        String srUrl = find.select(".result__snippet").attr("href");
-
-                        if (!srTitle.isEmpty()) {
-                            results.add(new SearchResult(srTitle, srContext, srUrl));
-                        }
-                    }
+                    List<SearchResult> pageResults = parseResults(document);
+                    results.addAll(pageResults);
 
                     request = results.size() < limit
                             ? nextPage(document)
                             : null;
                 }
 
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
             }
         } while (request != null);
 
@@ -67,6 +59,7 @@ public class DuckDuckGoSearch {
         Elements next = document.select(".nav-link form input");
         if (next.isEmpty()) {
             request = null;
+
         } else {
             FormBody.Builder postBuilder = new FormBody.Builder();
 
@@ -79,6 +72,23 @@ public class DuckDuckGoSearch {
                     .post(postBuilder.build())
                     .build();
         }
+
         return request;
+    }
+
+    private List<SearchResult> parseResults(Document document) {
+        List<SearchResult> results = Lists.mutable.empty();
+
+        for (Element find : document.select("div.result")) {
+            String srTitle = find.select(".result__title").text();
+            String srContext = find.select(".result__snippet").text();
+            String srUrl = find.select(".result__snippet").attr("href");
+
+            if (!srTitle.isEmpty()) {
+                results.add(new SearchResult(srTitle, srContext, srUrl));
+            }
+        }
+
+        return results;
     }
 }

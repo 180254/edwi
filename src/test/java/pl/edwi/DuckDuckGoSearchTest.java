@@ -2,6 +2,7 @@ package pl.edwi;
 
 import org.junit.Test;
 import pl.edwi.search.DuckDuckGoSearch;
+import pl.edwi.search.SearchEngine;
 import pl.edwi.search.SearchResult;
 import pl.edwi.web.WebDownloader;
 
@@ -14,7 +15,7 @@ public class DuckDuckGoSearchTest {
 
     public void test() throws IOException {
         WebDownloader wd = new WebDownloader();
-        DuckDuckGoSearch ddgs = new DuckDuckGoSearch(wd);
+        SearchEngine ddgs = new DuckDuckGoSearch(wd);
 
         List<SearchResult> search = ddgs.search("xiaomi", 99);
         for (SearchResult searchResult : search) {

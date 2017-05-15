@@ -1,27 +1,35 @@
 package pl.edwi.app;
 
-import com.google.common.base.MoreObjects;
+import org.eclipse.collections.impl.factory.Maps;
+import org.eclipse.collections.impl.factory.Sets;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.edwi.search.DuckDuckGoSearch;
+import pl.edwi.search.SearchEngine;
 import pl.edwi.search.SearchResult;
 import pl.edwi.sentiment.Sentiment;
 import pl.edwi.sentiment.SentimentAnalyser;
-import pl.edwi.sentiment.TsSentimentAnalyser;
+import pl.edwi.sentiment.TpSentimentAnalyser;
 import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 
 public class App8c {
 
     public static final int SEARCH_LIMIT = 50;
+    public static final String SEARCH_FORUM = "linustechtips.com";
+    public static final int EXAMPLES_LIMIT = 4;
 
-    public final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final WebDownloader webDownloader = new WebDownloader();
-    private final DuckDuckGoSearch searcher = new DuckDuckGoSearch(webDownloader);
-    private final SentimentAnalyser sentimentAnalyser = new TsSentimentAnalyser(webDownloader);
+    private final SearchEngine searcher = new DuckDuckGoSearch(webDownloader);
+    private final SentimentAnalyser sentimentAnalyser = new TpSentimentAnalyser(webDownloader);
 
     public static void main(String[] args) throws IOException {
         new App8c().go();
@@ -37,22 +45,28 @@ public class App8c {
                 System.out.flush();
                 String searching = scanner.nextLine().trim();
 
-                Map<String, Set<String>> texts = new HashMap<>();
-                texts.put("NEGATIVE", new HashSet<>());
-                texts.put("NEUTRAL", new HashSet<>());
-                texts.put("POSITIVE", new HashSet<>());
+                Map<String, Set<String>> texts = Maps.fixedSize.of(
+                        "NEGATIVE", Sets.mutable.<String>empty(),
+                        "NEUTRAL", Sets.mutable.<String>empty(),
+                        "POSITIVE", Sets.mutable.<String>empty()
+                );
 
                 if (searching.equals("q")) {
                     break;
+
                 } else {
                     try {
                         logger.info("state: start");
 
-                        String phrase = "site:linustechtips.com \"" + searching + '"';
+                        String phrase = MessageFormat.format("site:{0} \"{1}\"", SEARCH_FORUM, searching);
                         List<SearchResult> searchResults = searcher.search(phrase, SEARCH_LIMIT);
-                        logger.info("state: search");
+                        logger.info("state: search done");
 
-                        Map<String, Integer> sentiments = new ConcurrentHashMap<>(SEARCH_LIMIT);
+                        Map<String, Integer> sentiments = ConcurrentHashMap.newMap();
+                        sentiments.put("NEGATIVE", 0);
+                        sentiments.put("NEUTRAL", 0);
+                        sentiments.put("POSITIVE", 0);
+
                         searchResults
                                 .stream()
                                 .parallel()
@@ -60,44 +74,41 @@ public class App8c {
                                     try {
                                         if (!searchResult.context.trim().isEmpty()) {
                                             Sentiment sentiment = sentimentAnalyser.analyze(searchResult.context);
-                                            sentiments.compute(sentiment.name(), (key, value) -> MoreObjects.firstNonNull(value, 0) + 1);
+                                            sentiments.compute(sentiment.name(), (key, value) -> value + 1);
                                             texts.get(sentiment.name()).add(searchResult.context);
                                         }
                                     } catch (IOException e) {
-                                        //logger.info("exception: []", e.toString());
+                                        logger.info("exception: {}", e.toString());
                                     }
                                 });
-                        logger.info("state: sentiment");
+                        logger.info("state: sentiment done");
 
-                        int aa = 0;
-                        int sum = sentiments.values().stream().mapToInt(i -> i).sum();
-                        printInfo(sentiments, sum, "Negative", "NEGATIVE");
-                        for (String txt : texts.get("NEGATIVE")) {
-                            logger.info("- " + txt);
-                            aa++;
-                            if (aa >= 4) break;
-                        }
+                        int hits = sentiments.values().stream().mapToInt(i -> i).sum();
 
-                        aa = 0;
-                        printInfo(sentiments, sum, "Neutral", "NEUTRAL");
-                        for (String txt : texts.get("NEUTRAL")) {
-                            logger.info("- " + txt);
-                            aa++;
-                            if (aa >= 4) break;
-                        }
+                        printInfo(sentiments, hits, "Negative", "NEGATIVE");
+                        printExamples(texts, "NEGATIVE");
 
-                        aa = 0;
-                        printInfo(sentiments, sum, "Positive", "POSITIVE");
-                        for (String txt : texts.get("POSITIVE")) {
-                            logger.info("- " + txt);
-                            aa++;
-                            if (aa >= 4) break;
-                        }
+                        printInfo(sentiments, hits, "Neutral", "NEUTRAL");
+                        printExamples(texts, "NEUTRAL");
+
+                        printInfo(sentiments, hits, "Positive", "POSITIVE");
+                        printExamples(texts, "POSITIVE");
 
                     } catch (Exception e) {
                         logger.warn("Processing failed {}", e.toString());
                     }
                 }
+            }
+        }
+    }
+
+    private void printExamples(Map<String, Set<String>> texts, String mapKey) {
+        int counter = 0;
+        for (String txt : texts.get(mapKey)) {
+            logger.info("- " + txt);
+            counter++;
+            if (counter >= EXAMPLES_LIMIT) {
+                break;
             }
         }
     }
