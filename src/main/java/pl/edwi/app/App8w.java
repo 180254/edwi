@@ -13,6 +13,7 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.QueryBuilder;
+import org.eclipse.collections.impl.factory.Maps;
 import pl.edwi.tool.Try;
 
 import javax.swing.*;
@@ -22,7 +23,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 
 public class App8w {
@@ -105,7 +105,7 @@ public class App8w {
         try {
             Query query = new QueryParser("par", analyzer).parse(find);
             IndexSearcher searcher = new IndexSearcher(reader);
-            Map<String, Integer> sentiments = new HashMap<>(10_000);
+            Map<String, Integer> sentiments = Maps.mutable.empty();
 
             LeafCollector leafCollector = new LeafCollector() {
                 @Override
@@ -134,11 +134,11 @@ public class App8w {
 
             searcher.search(query, collector);
 
-            int sum = sentiments.values().stream().mapToInt(i -> i).sum();
-            statusLabel.setText("Znaleziono " + sum + " wpisów (timestamp: " + System.currentTimeMillis() + ").");
-            statsArea.append(formatStatInfo(sentiments, sum, "Negatywne", "NEGATIVE"));
-            statsArea.append(formatStatInfo(sentiments, sum, "Neutralne", "NEUTRAL"));
-            statsArea.append(formatStatInfo(sentiments, sum, "Posytywne", "POSITIVE"));
+            int hits = sentiments.values().stream().mapToInt(i -> i).sum();
+            statusLabel.setText("Znaleziono " + hits + " wpisów (timestamp: " + System.currentTimeMillis() + ").");
+            statsArea.append(formatStatInfo(sentiments, hits, "Negatywne", "NEGATIVE"));
+            statsArea.append(formatStatInfo(sentiments, hits, "Neutralne", "NEUTRAL"));
+            statsArea.append(formatStatInfo(sentiments, hits, "Posytywne", "POSITIVE"));
 
 
             negArea.setText(getExamples(analyzer, searcher, query, "NEGATIVE"));
@@ -155,13 +155,14 @@ public class App8w {
         return String.format("%s: %d (%.2f)%n", printName, value, (double) value / sumOfValues * 100);
     }
 
-    public String getExamples(Analyzer analyzer, IndexSearcher searcher, Query baseQuery, String sen) throws IOException {
-        Query senQuery = new QueryBuilder(analyzer).createPhraseQuery("sen", sen);
-        Query best = new BooleanQuery.Builder()
+    public String getExamples(Analyzer analyzer, IndexSearcher searcher, Query baseQuery, String sentiment) throws IOException {
+        Query sentimentQuery = new QueryBuilder(analyzer).createPhraseQuery("sen", sentiment);
+        Query examplesQuery = new BooleanQuery.Builder()
                 .add(baseQuery, BooleanClause.Occur.MUST)
-                .add(senQuery, BooleanClause.Occur.MUST)
+                .add(sentimentQuery, BooleanClause.Occur.MUST)
                 .build();
-        TopDocs topDocs = searcher.search(best, 10);
+
+        TopDocs topDocs = searcher.search(examplesQuery, 10);
         ScoreDoc[] topHits = topDocs.scoreDocs;
 
         StringBuilder examples = new StringBuilder(1000);
