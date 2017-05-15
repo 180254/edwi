@@ -52,6 +52,10 @@ public class DuckDuckGoSearch {
                             ? nextPage(document)
                             : null;
                 }
+
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         } while (request != null);
 
