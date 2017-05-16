@@ -22,8 +22,8 @@ import java.util.Set;
 
 public class App8c {
 
-    public static final int SEARCH_LIMIT = 50;
     public static final String SEARCH_FORUM = "linustechtips.com";
+    public static final int SEARCH_LIMIT = 50;
     public static final int EXAMPLES_LIMIT = 4;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -102,7 +102,13 @@ public class App8c {
         }
     }
 
-    private void printExamples(Map<String, Set<String>> texts, String mapKey) {
+    public void printInfo(Map<String, Integer> map, int sumOfValues, String printName, String mapKey) {
+        int value = map.getOrDefault(mapKey, 0);
+        String msg = String.format("%s: %d (%.2f%%)", printName, value, (double) value / sumOfValues * 100);
+        logger.info(msg);
+    }
+
+    public void printExamples(Map<String, Set<String>> texts, String mapKey) {
         int counter = 0;
         for (String txt : texts.get(mapKey)) {
             logger.info("- " + txt);
@@ -111,11 +117,5 @@ public class App8c {
                 break;
             }
         }
-    }
-
-    public void printInfo(Map<String, Integer> map, int sumOfValues, String printName, String mapKey) {
-        int value = map.getOrDefault(mapKey, 0);
-        String msg = String.format("%s: %d (%.2f%%)", printName, value, (double) value / sumOfValues * 100);
-        logger.info(msg);
     }
 }
