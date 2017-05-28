@@ -1,8 +1,0 @@
-Zadanie 1 - pobieranie stron www.
-Zadanie 2 - najczęściej występujące słowa.
-Zadanie 3 - porównanie dokumentów.
-Zadanie 4 - analiza hiperłączy.
-Zadanie 5 - biblioteka Lucene.
-Zadanie 6 - biblioteki Lucene ciąg dalszy.
-Zadanie 7 - bot.
-Zadanie 8 - doradca sprzętu.
