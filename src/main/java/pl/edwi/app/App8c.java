@@ -1,24 +1,17 @@
 package pl.edwi.app;
 
-import org.eclipse.collections.impl.factory.Maps;
-import org.eclipse.collections.impl.factory.Sets;
-import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.edwi.search.DuckDuckGoSearch;
 import pl.edwi.search.SearchEngine;
 import pl.edwi.search.SearchResult;
-import pl.edwi.sentiment.Sentiment;
-import pl.edwi.sentiment.SentimentAnalyser;
-import pl.edwi.sentiment.TpSentimentAnalyser;
+import pl.edwi.sentiment.*;
 import pl.edwi.web.WebDownloader;
 
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 public class App8c {
 
@@ -28,8 +21,9 @@ public class App8c {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final WebDownloader webDownloader = new WebDownloader();
-    private final SearchEngine searcher = new DuckDuckGoSearch(webDownloader);
+    private final SearchEngine searchEngine = new DuckDuckGoSearch(webDownloader);
     private final SentimentAnalyser sentimentAnalyser = new TpSentimentAnalyser(webDownloader);
+    private final StatCollector statCollector = new StatCollectorImpl();
 
     public static void main(String[] args) throws IOException {
         new App8c().go();
@@ -45,27 +39,16 @@ public class App8c {
                 System.out.flush();
                 String searching = scanner.nextLine().trim();
 
-                Map<String, Set<String>> texts = Maps.fixedSize.of(
-                        "NEGATIVE", Sets.mutable.<String>empty(),
-                        "NEUTRAL", Sets.mutable.<String>empty(),
-                        "POSITIVE", Sets.mutable.<String>empty()
-                );
-
                 if (searching.equals("q")) {
                     break;
 
                 } else {
                     try {
-                        logger.info("state: start");
+                        logger.debug("state: start");
 
                         String phrase = MessageFormat.format("site:{0} \"{1}\"", SEARCH_FORUM, searching);
-                        List<SearchResult> searchResults = searcher.search(phrase, SEARCH_LIMIT);
-                        logger.info("state: search done");
-
-                        Map<String, Integer> sentiments = ConcurrentHashMap.newMap();
-                        sentiments.put("NEGATIVE", 0);
-                        sentiments.put("NEUTRAL", 0);
-                        sentiments.put("POSITIVE", 0);
+                        List<SearchResult> searchResults = searchEngine.search(phrase, SEARCH_LIMIT);
+                        logger.debug("state: search done");
 
                         searchResults
                                 .stream()
@@ -74,48 +57,35 @@ public class App8c {
                                     try {
                                         if (!searchResult.context.trim().isEmpty()) {
                                             Sentiment sentiment = sentimentAnalyser.analyze(searchResult.context);
-                                            sentiments.compute(sentiment.name(), (key, value) -> value + 1);
-                                            texts.get(sentiment.name()).add(searchResult.context);
+                                            statCollector.addResult(searchResult.context, sentiment);
                                         }
                                     } catch (IOException e) {
-                                        logger.info("exception: {}", e.toString());
+                                        logger.warn("Exception: {}", e.toString());
                                     }
                                 });
+
                         logger.info("state: sentiment done");
 
-                        int hits = sentiments.values().stream().mapToInt(i -> i).sum();
+                        printResult(Sentiment.NEGATIVE);
+                        printResult(Sentiment.NEUTRAL);
+                        printResult(Sentiment.POSITIVE);
 
-                        printInfo(sentiments, hits, "Negative", "NEGATIVE");
-                        printExamples(texts, "NEGATIVE");
-
-                        printInfo(sentiments, hits, "Neutral", "NEUTRAL");
-                        printExamples(texts, "NEUTRAL");
-
-                        printInfo(sentiments, hits, "Positive", "POSITIVE");
-                        printExamples(texts, "POSITIVE");
+                        logger.debug("state: all done");
 
                     } catch (Exception e) {
-                        logger.warn("Processing failed {}", e.toString());
+                        logger.warn("Processing failed: {}", e.toString());
                     }
                 }
             }
         }
     }
 
-    public void printInfo(Map<String, Integer> map, int sumOfValues, String printName, String mapKey) {
-        int value = map.getOrDefault(mapKey, 0);
-        String msg = String.format("%s: %d (%.2f%%)", printName, value, (double) value / sumOfValues * 100);
-        logger.info(msg);
-    }
+    private void printResult(Sentiment sentiment) {
+        logger.info(statCollector.getStatInfo(sentiment));
 
-    public void printExamples(Map<String, Set<String>> texts, String mapKey) {
-        int counter = 0;
-        for (String txt : texts.get(mapKey)) {
-            logger.info("- " + txt);
-            counter++;
-            if (counter >= EXAMPLES_LIMIT) {
-                break;
-            }
+        for (String example : statCollector.getExamples(sentiment, EXAMPLES_LIMIT)) {
+            logger.info("- " + example);
+
         }
     }
 }
