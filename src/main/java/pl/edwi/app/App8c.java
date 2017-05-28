@@ -63,13 +63,11 @@ public class App8c {
                                         logger.warn("Exception: {}", e.toString());
                                     }
                                 });
-
-                        logger.info("state: sentiment done");
+                        logger.debug("state: sentiment done");
 
                         printResult(Sentiment.NEGATIVE);
                         printResult(Sentiment.NEUTRAL);
                         printResult(Sentiment.POSITIVE);
-
                         logger.debug("state: all done");
 
                     } catch (Exception e) {
